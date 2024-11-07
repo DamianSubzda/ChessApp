@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/0.5.128-alpha">
+  <PropertyGroup>
+    <StartupCommand>npm run dev</StartupCommand>
+    <SpaRoot>chessApp.client\</SpaRoot>
+    <PublishAssetsDirectory>$(SpaRoot)build</PublishAssetsDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="$(SpaRoot)public\**" />
+    <Content Include="$(SpaRoot)src\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src\assets\" />
+    <Folder Include="src\components\" />
+    <Folder Include="src\styles\" />
+    <Folder Include="src\utils\" />
+    <Folder Include="src\store\" />
+    <Folder Include="src\hooks\" />
+    <Folder Include="src\pages\" />
+    <Folder Include="src\services\" />
+  </ItemGroup>
+</Project>
