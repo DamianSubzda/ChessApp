@@ -1,7 +1,13 @@
 import React from "react";
 
+import MenuPage from "./pages/MenuPage";
+
 function App() {
-  return <h1>Hello world!</h1>;
+  return (
+    <React.Fragment>
+      <MenuPage/>
+    </React.Fragment>
+  );
 }
 
 export default App;
