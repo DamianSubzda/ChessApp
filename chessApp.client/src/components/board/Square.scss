@@ -1,6 +1,38 @@
 
 .square{
     border: 1px solid black;
-    width: 50px;
-    height: 50px;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    align-items: end;
+}
+
+.notation{
+    width: inherit;
+    height: inherit;
+    display: flex;
+    justify-content: left;
+    align-items: end;
+    opacity: 50%;
+
+    p{
+        font-size: small;
+        padding: 0;
+        margin: 1px;
+    }
+}
+
+.piece{
+    position: absolute;
+    width: inherit;
+    height: inherit;
+    z-index: 999;
+    
+    img{
+        width: inherit;
+        height: inherit;
+        
+    }
 }

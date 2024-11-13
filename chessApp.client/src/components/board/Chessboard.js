@@ -3,31 +3,28 @@ import { useState, useEffect } from "react";
 import Square from "./Square";
 import "./Chessboard.scss"
 import Timer from "./Timer"
+import checkMove from "../../services/piecesMove";
+import { useDispatch, useSelector } from "react-redux";
+import { setupBoard, reverseBoard, movePiece } from "../../store/boardReducer";
 
 function Chessboard(){
-    const [squares, setSquares] = useState([]);
-    const boardSize = 8;
+    const dispatch = useDispatch();
+    const squares = useSelector((state) => state.board.squares);
 
     useEffect( () => {
-        setSquares(createBoard());
-    }, [])
+        dispatch(setupBoard());
+    }, [dispatch])
 
-    function reverseBoard(){
-        setSquares([...squares].reverse());
+    function reverse(){
+        dispatch(reverseBoard());
     }
 
-    function createBoard(){
-        const board = [];
-        for(let row = boardSize; row > 0; row--){
-            for(let col = 1; col <= boardSize; col++){
-                const isWhite = (row + col) % 2 === 1;
-                board.push(
-                    <Square key={`${row}${col}`} isWhite={isWhite} row={row} column={col} />
-                )
-            }
-        }
-        return board;
-    }
+    const onDropPiece = (pieceData, targetPosition) => {
+        if (!checkMove(pieceData, targetPosition, squares)) return;
+        //Timer
+        dispatch(movePiece({ pieceData, targetPosition }))
+
+    };
 
     function stopTimer(){
         console.log("STOP/START");
@@ -35,13 +32,22 @@ function Chessboard(){
 
     return(
         <React.Fragment>
-        <Timer initialTime={7290} onStop={stopTimer}/>
+        <Timer initialTime={600} onStop={stopTimer}/>
         
-        <button onClick={reverseBoard}>Reverse</button>
+        <button onClick={reverse}>Reverse</button>
         <div className="chessboard">
-            {squares}
+            {squares.map((square, index) => (
+                <Square
+                    key={index}
+                    row={square.row}
+                    column={square.column}
+                    piece={square.piece}
+                    pieceColor={square.pieceColor}
+                    onDropPiece={onDropPiece}
+                />
+            ))}
         </div>
-        <Timer initialTime={500} onStop={stopTimer}/>
+        <Timer initialTime={600} onStop={stopTimer}/>
         </React.Fragment>
         
     )

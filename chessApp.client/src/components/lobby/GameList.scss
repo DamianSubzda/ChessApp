@@ -1,0 +1,15 @@
+table, th, td {
+    border-collapse: collapse;
+    border: 1px solid black;
+    width: 100%;
+  }
+  
+  td, th {
+    width: -moz-available;
+    text-align: left;
+    padding: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  
