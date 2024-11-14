@@ -1,17 +1,22 @@
 import "./GameList.scss"
+import { Link } from "react-router-dom";
+import GameRecord from "./GameRecord";
 
 function GameList(){
     return (
-        <div>
-        <h1>Game list:</h1>
-        <table>
-            <tr><td>Test <button>Join</button></td></tr>
-            <tr><td>Test2 <button>Join</button></td></tr>
-            <tr><td>Test3 <button>Join</button></td></tr>
-            <tr><td>Test4 <button>Join</button></td></tr>
-        </table>
-            
-        </div>
+        <>
+            <Link to="/">Return</Link>
+            <div className="lobby-panel">
+                
+                <h1>Current open games:</h1>
+                <table>
+                    <GameRecord/>
+                    <GameRecord/>
+                    <GameRecord/>
+                    <GameRecord/>
+                </table>
+            </div>
+        </>
     );
 }
 

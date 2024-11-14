@@ -1,11 +1,8 @@
-import React from "react";
-import GameList from "./../components/lobby/GameList"
+import Lobby from "../components/UI/Lobby";
 
 function LobbyPage(){
     return (
-        <React.Fragment>
-            <GameList />
-        </React.Fragment>
+        <Lobby/>
     );
 }
 

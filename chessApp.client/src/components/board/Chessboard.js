@@ -42,7 +42,6 @@ function Chessboard(){
                     row={square.row}
                     column={square.column}
                     piece={square.piece}
-                    pieceColor={square.pieceColor}
                     onDropPiece={onDropPiece}
                 />
             ))}

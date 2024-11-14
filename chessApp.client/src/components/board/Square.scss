@@ -29,10 +29,14 @@
     width: inherit;
     height: inherit;
     z-index: 999;
-    
+    transition: transform 0.1s ease;
+
     img{
         width: inherit;
         height: inherit;
-        
+        cursor: grab;
+    }
+    img:active {
+        cursor: grabbing;
     }
 }

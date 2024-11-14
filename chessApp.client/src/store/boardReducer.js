@@ -19,23 +19,23 @@ const boardSlice = createSlice({
             const { pieceData, targetPosition } = action.payload;
 
             // Ruch pionka na końcowy rząd uruchamia promocję
-            if (pieceData.piece === 'wp.png' && targetPosition.row === 8) {
+            if (pieceData.piece.src === 'wp.png' && targetPosition.row === 8) {
                 state.squares = state.squares.map((square) => {
                     if (square.row === targetPosition.row && square.column === targetPosition.column) {
-                        return { ...square, piece: 'wq.png', pieceColor: 'white' }; // Biała królowa
+                        return { ...square, piece: {src: 'wq.png', color: 'white' }}; // Biała królowa
                     }
                     if (square.row === pieceData.row && square.column === pieceData.column) {
-                        return { ...square, piece: null, pieceColor: null };
+                        return { ...square, piece: null};
                     }
                     return square;
                 });
-            } else if (pieceData.piece === 'bp.png' && targetPosition.row === 1) {
+            } else if (pieceData.piece.src === 'bp.png' && targetPosition.row === 1) {
                 state.squares = state.squares.map((square) => {
                     if (square.row === targetPosition.row && square.column === targetPosition.column) {
-                        return { ...square, piece: 'bq.png', pieceColor: 'black' }; // Czarna królowa
+                        return { ...square, piece: {src: 'bq.png', color: 'black' }}; // Czarna królowa
                     }
                     if (square.row === pieceData.row && square.column === pieceData.column) {
-                        return { ...square, piece: null, pieceColor: null };
+                        return { ...square, piece: null };
                     }
                     return square;
                 });
@@ -43,11 +43,12 @@ const boardSlice = createSlice({
                 // Normalne przesunięcie figury
                 state.squares = state.squares.map((square) => {
                     if (square.row === targetPosition.row && square.column === targetPosition.column) {
-                        return { ...square, piece: pieceData.piece, pieceColor: pieceData.pieceColor };
+                        return { ...square, piece: pieceData.piece };
                     }
                     if (square.row === pieceData.row && square.column === pieceData.column) {
-                        return { ...square, piece: null, pieceColor: null };
+                        return { ...square, piece: null };
                     }
+                    
                     return square;
                 });
             }
@@ -71,9 +72,12 @@ function setupInitialBoard() {
         const row = Math.abs(Math.floor(index / 8) - 8);
         const column = (index % 8) + 1;
         const position = `${changeDigitsToLetter(column)}${row}`;
-        const piece = initialPositions[position] || null;
-        const pieceColor = piece ? (row < 3 ? 'white' : 'black') : null;
-        console.log(index, row, column, piece, pieceColor);
-        return { row, column, piece, pieceColor };
+        const piece = initialPositions[position]
+            ? {
+                  src: initialPositions[position], 
+                  color: row < 5 ? 'white' : 'black'
+              }
+            : null;
+        return { row, column, piece };
     });
 }

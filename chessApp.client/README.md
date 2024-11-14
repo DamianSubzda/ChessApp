@@ -12,3 +12,4 @@ react-window lub react-virtualized – Jeśli projekt obejmuje bardziej rozbudow
 
 npm i sass
 npm -v 10.2.4
+bootstrap

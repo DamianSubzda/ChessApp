@@ -1,7 +1,15 @@
+.lobby-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 table, th, td {
     border-collapse: collapse;
     border: 1px solid black;
-    width: 100%;
+    width: 80%;
   }
   
   td, th {

@@ -1,104 +1,226 @@
 
-function checkMove(piece, target, squares){
-    console.log(piece);
-    console.log(target);
+function checkMove(pieceData, target, squares){
 
-    switch (piece.piece[1]) {
+    if (!checkIfSquareIsClearFromAllyPieces(pieceData, target, squares)) return false;
+
+    switch (pieceData.piece.src[1]) {
         case "p":
-            return checkPawn(piece, target, squares)
+            return checkPawn(pieceData, target, squares)
         case "r":
-            return checkRook(piece, target, squares)
+            return checkRook(pieceData, target, squares)
         case "n":
-            return checkKnight(piece, target, squares)
+            return checkKnight(pieceData, target, squares)
         case "b":
-            return checkBishop(piece, target, squares)
+            return checkBishop(pieceData, target, squares)
         case "q":
-            return checkQueen(piece, target, squares)
+            return checkQueen(pieceData, target, squares)
         case "k":
-            return checkKing(piece, target, squares)
+            return checkKing(pieceData, target, squares)
         default:
             return false;
     }
 }
 
-function checkPawn(piece, target, squares){
+function checkIfSquareIsClearFromAllyPieces(pieceData, target, squares) { 
+    const targetSquare = squares.find(
+        (sq) => sq.row === target.row && sq.column === target.column
+    );
+
+    if (targetSquare && targetSquare.piece && targetSquare.piece.color === pieceData.piece.color) {
+        return false;
+    }
+
+    return true;
+}
+
+function checkPawn(pieceData, target, squares){
     console.log("Checking pawn");
 
-    if (piece.piece[0] === "w"){
+    if (pieceData.piece.color === "white"){
         //white pawn
-        if (piece.column !== target.column){
+        if (pieceData.column !== target.column){
             //sprawdzenie zbicia
+            if (Math.abs(pieceData.column - target.column) === 1 && target.row === pieceData.row + 1){
+                return checkIfPawnCanTake(pieceData, target, squares);
+            }
             return false;
         }
-        if (target.row === piece.row + 2){
+        if (target.row === pieceData.row + 2){
             //First move
-            if (piece.row === 2){
-                return checkCollision(piece, target, squares);
+            if (pieceData.row === 2){
+                return checkPawnCollision(pieceData, target, squares);
             }else{
                 return false;
             }
         }
-        if (target.row === piece.row + 1){
-            return checkCollision(piece, target, squares);
+        if (target.row === pieceData.row + 1){
+            return checkPawnCollision(pieceData, target, squares);
         }
     }
     else{
         //black pawn
-        if (piece.column !== target.column){
+        if (pieceData.column !== target.column){
             //sprawdzenie zbicia
             return false;
         }
-        if (target.row === piece.row - 2){
+        if (target.row === pieceData.row - 2){
             //First move
-            if (piece.row === 7){
-                return checkCollision(piece, target, squares);
+            if (pieceData.row === 7){
+                return checkPawnCollision(pieceData, target, squares) ;
             }else{
                 return false;
             }
         }
-        if (target.row === piece.row - 1){
-            return checkCollision(piece, target, squares);
+        if (target.row === pieceData.row - 1){
+            return checkPawnCollision(pieceData, target, squares);
         }
     }
 
     return false;
 }
 
-function checkRook(piece, target, squares){
+function checkPawnCollision(pieceData, target, squares){
+    if (Math.abs(target.row - pieceData.row) > 1) {
+        if (target.row > pieceData.row){
+            //White
+            if (squares.find((sq) => sq.row === target.row - 1 && sq.column === target.column).piece !== null){//-1 ponieważ to pole które pion by 'przeskoczył'
+                return false;
+            }
+        }else{
+            //Black
+            if (squares.find((sq) => sq.row === target.row + 1 && sq.column === target.column).piece !== null){//+1 ponieważ to pole które pion by 'przeskoczył'
+                return false;
+            }
+        }
+    }
+    return squares.find((sq) => sq.row === target.row && sq.column === target.column).piece === null;
+}
+
+function checkIfPawnCanTake(pieceData, target, squares){
+    console.log("pawn takes");
+    if (squares.find((sq) => sq.row === target.row && sq.column === target.column).piece !== null){
+        return true;
+    }
+    return false;
+}
+
+function checkRook(pieceData, target, squares){
     console.log("Checking rook");
-    return true;
-}
 
-function checkKnight(piece, target, squares){
-    console.log("Checking knight");
-    return true;
-}
-
-function checkBishop(piece, target, squares){
-
-}
-
-function checkQueen(piece, target, squares){
-
-}
-
-function checkKing(piece, target, squares){
-    console.log("checking king");
-    console.log(piece);
-    if (Math.abs(target.row - piece.row) > 1) return false;
-    if (Math.abs(target.column - piece.column) > 1) return false;
-    if (checkIfEnemiesKingIsInRange(target.row, target.column, squares, piece.pieceColor)) return false;
-    return !checkIfSquareIsClear(target.row, target.column, squares)
-
-}
-
-
-function checkCollision(piece, target, squares){
+    if (pieceData.row !== target.row && pieceData.column !== target.column) {
+        return false;
+    }
     
+    return !checkRookCollision(pieceData, target, squares);
 }
 
-function checkIfEnemiesKingIsInRange(row, column, squares, pieceColor){
-    console.log(row, column, pieceColor, squares);
+function checkRookCollision(pieceData, target, squares){
+    let deltaRow = target.row > pieceData.row ? 1 : target.row < pieceData.row ? -1 : 0;
+    let deltaColumn = target.column > pieceData.column ? 1 : target.column < pieceData.column ? -1 : 0;
+
+    let currentRow = pieceData.row + deltaRow;
+    let currentColumn = pieceData.column + deltaColumn;
+
+    while (currentRow !== target.row || currentColumn !== target.column) {
+        if (squares.find(sq => sq.row === currentRow && sq.column === currentColumn).piece !== null) {
+            return true;
+        }
+        currentRow += deltaRow;
+        currentColumn += deltaColumn;
+    }
+
+    return false;
+}
+
+function checkKnight(pieceData, target, squares){
+    console.log("Checking knight");
+
+    if (Math.abs(pieceData.row - target.row) === 1){
+        //Na boki
+        return Math.abs(pieceData.column - target.column) === 2;
+    }
+    else if (Math.abs(pieceData.row - target.row) === 2){
+        //góra/dół
+        return Math.abs(pieceData.column - target.column) === 1;
+    }
+
+    return false;
+}
+
+function checkBishop(pieceData, target, squares){
+    const deltaRow = Math.abs(pieceData.row - target.row);
+    const deltaColumn = Math.abs(pieceData.column - target.column);
+
+    if (deltaColumn === deltaRow){
+        return !checkBishopCollision(pieceData, target, squares);
+    }
+    return false;
+}
+
+function checkBishopCollision(pieceData, target, squares){
+    const deltaRow = target.row > pieceData.row ? 1 : -1;
+    const deltaColumn = target.column > pieceData.column ? 1 : -1;
+
+    let currentRow = pieceData.row + deltaRow;
+    let currentColumn = pieceData.column + deltaColumn;
+
+    while (currentRow !== target.row && currentColumn !== target.column) {
+        if (squares.find((sq) => sq.row === currentRow && sq.column === currentColumn && sq.piece !== null)) {
+            return true;
+        }
+        currentRow += deltaRow;
+        currentColumn += deltaColumn;
+    }
+
+    return false;
+}
+
+function checkQueen(pieceData, target, squares){
+    const deltaRow = Math.abs(pieceData.row - target.row);
+    const deltaColumn = Math.abs(pieceData.column - target.column);
+
+    if (deltaColumn === deltaRow || pieceData.row === target.row || pieceData.column === target.column){
+        return !checkQueenCollision(pieceData, target, squares);
+    }
+    return false;
+
+}
+
+function checkQueenCollision(pieceData, target, squares){
+    console.log("queen collision");
+    const deltaRow = target.row === pieceData.row ? 0 : target.row > pieceData.row ? 1 : -1;
+    const deltaColumn = target.column === pieceData.column ? 0 : target.column > pieceData.column ? 1 : -1;
+
+    let currentRow = pieceData.row + deltaRow;
+    let currentColumn = pieceData.column + deltaColumn;
+
+    console.log(pieceData);
+    console.log(target);
+    console.log(currentRow, currentColumn);
+    console.log(currentRow !== target.row && currentColumn !== target.column);
+
+    while (currentRow !== target.row || currentColumn !== target.column) {
+        console.log(currentRow, currentColumn);
+        if (squares.find((sq) => sq.row === currentRow && sq.column === currentColumn && sq.piece !== null)) {
+            return true;
+        }
+        currentRow += deltaRow;
+        currentColumn += deltaColumn;
+    }
+
+    return false;
+}
+
+function checkKing(pieceData, target, squares){
+    console.log("checking king");
+    if (Math.abs(target.row - pieceData.row) > 1) return false;
+    if (Math.abs(target.column - pieceData.column) > 1) return false;
+    if (checkIfEnemiesKingIsInRange(pieceData, target, squares)) return false;
+    return true;
+
+}
+
+function checkIfEnemiesKingIsInRange(pieceData, target, squares){
     const directions = [
         { rowOffset: -1, colOffset: -1 }, // górny-lewy
         { rowOffset: -1, colOffset: 0 },  // góra
@@ -111,34 +233,18 @@ function checkIfEnemiesKingIsInRange(row, column, squares, pieceColor){
     ];
 
     for (const { rowOffset, colOffset } of directions) {
-        const targetRow = row + rowOffset;
-        const targetCol = column + colOffset;
+        const targetRow = target.row + rowOffset;
+        const targetCol = target.column + colOffset;
 
         const square = squares.find(
-            (sq) => sq.row === targetRow && sq.column === targetCol && sq.piece && sq.piece[1] === "k" && sq.pieceColor !== pieceColor
+            (sq) => sq.row === targetRow && sq.column === targetCol && sq.piece && sq.piece.src[1] === "k" && sq.piece.color !== pieceData.piece.color
         );
-        console.log(square);
         if (square) {
-            return true; // Król przeciwnika jest w zasięgu
+            return true;
         }
     }
 
     return false;
 }
-
-function checkIfSquareIsClear(row, column, squares){
-    if (squares.find((square) => square.row === row && square.column === column).piece === null){
-        return false;
-    }
-    return true;
-}
-
-function checkIfSquareIsClearFromAllyPieces(row, column, squares){ //toDo
-    if (squares.find((square)=> square.row === row && square.column === column).piece === null){
-        return false;
-    }
-    return true;
-}
-
 
 export default checkMove;
