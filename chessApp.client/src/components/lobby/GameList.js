@@ -2,7 +2,7 @@ import "./GameList.scss"
 import { Link } from "react-router-dom";
 import GameRecord from "./GameRecord";
 
-function GameList(){
+function GameList(props){
     return (
         <>
             <Link to="/">Return</Link>
@@ -10,10 +10,9 @@ function GameList(){
                 
                 <h1>Current open games:</h1>
                 <table>
-                    <GameRecord/>
-                    <GameRecord/>
-                    <GameRecord/>
-                    <GameRecord/>
+                    {props.games.map((game) => (
+                        <GameRecord key={game.gameId}/>
+                    ))}
                 </table>
             </div>
         </>
