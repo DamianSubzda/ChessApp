@@ -22,7 +22,7 @@ function Chessboard({ isPlayerWhite, isPlayerPlaying, isPlayersMove, makeMove })
         if (!checkMove(pieceData, targetPosition, squares)) return;
         //Timer
         dispatch(movePiece({ pieceData, targetPosition }));
-        
+
 
         makeMove({
             piece: {

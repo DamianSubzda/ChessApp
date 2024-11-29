@@ -1,12 +1,6 @@
 
-.square{
-    border: 1px solid black;
-    width: 80px;
-    height: 80px;
-    display: flex;
-    flex-direction: column;
-    justify-content: left;
-    align-items: end;
+body.grabbing, body.grabbing * {
+    cursor: grabbing !important;
 }
 
 .notation{
@@ -24,19 +18,37 @@
     }
 }
 
-.piece{
+.square {
+    border: 1px solid black;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    align-items: end;
+}
+
+.piece {
     position: absolute;
     width: inherit;
     height: inherit;
     z-index: 999;
-    transition: transform 0.1s ease;
 
-    img{
+    img {
+        transform-origin: center;
         width: inherit;
         height: inherit;
         cursor: grab;
     }
-    img:active {
-        cursor: grabbing;
+
+    &.dragging {
+        opacity: 0.3;
+        transition: opacity 0.2s ease; 
     }
 }
+
+#dragging-piece {
+    pointer-events: none;
+    transform: scale(1.2);
+}
+
