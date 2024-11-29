@@ -22,8 +22,4 @@
     <PackageReference Include="Microsoft.AspNetCore.SpaProxy" Version="8.*-*" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Services\" />
-  </ItemGroup>
-
 </Project>

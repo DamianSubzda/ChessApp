@@ -17,41 +17,23 @@ const boardSlice = createSlice({
         },
         movePiece(state, action) {
             const { pieceData, targetPosition } = action.payload;
-
-            // Ruch pionka na końcowy rząd uruchamia promocję
-            if (pieceData.piece.src === 'wp.png' && targetPosition.row === 8) {
-                state.squares = state.squares.map((square) => {
-                    if (square.row === targetPosition.row && square.column === targetPosition.column) {
-                        return { ...square, piece: {src: 'wq.png', color: 'white' }}; // Biała królowa
-                    }
-                    if (square.row === pieceData.row && square.column === pieceData.column) {
-                        return { ...square, piece: null};
-                    }
-                    return square;
-                });
-            } else if (pieceData.piece.src === 'bp.png' && targetPosition.row === 1) {
-                state.squares = state.squares.map((square) => {
-                    if (square.row === targetPosition.row && square.column === targetPosition.column) {
-                        return { ...square, piece: {src: 'bq.png', color: 'black' }}; // Czarna królowa
-                    }
-                    if (square.row === pieceData.row && square.column === pieceData.column) {
-                        return { ...square, piece: null };
-                    }
-                    return square;
-                });
-            } else {
-                // Normalne przesunięcie figury
-                state.squares = state.squares.map((square) => {
-                    if (square.row === targetPosition.row && square.column === targetPosition.column) {
-                        return { ...square, piece: pieceData.piece };
-                    }
-                    if (square.row === pieceData.row && square.column === pieceData.column) {
-                        return { ...square, piece: null };
-                    }
-                    
-                    return square;
-                });
+            //Promocja
+            if (pieceData.pieceSrc === 'wp.png' && targetPosition.row === 8) {
+                pieceData.pieceSrc = 'wq.png';
+            } else if (pieceData.pieceSrc === 'bp.png' && targetPosition.row === 1) {
+                pieceData.pieceSrc = 'bq.png';
             }
+        
+            state.squares = state.squares.map((square) => {
+                if (square.row === targetPosition.row && square.column === targetPosition.column) {
+                    return { ...square, pieceSrc: pieceData.pieceSrc, pieceColor: pieceData.pieceColor };
+                }
+                if (square.row === pieceData.row && square.column === pieceData.column) {
+                    return { ...square, pieceSrc: null, pieceColor: null };
+                }
+                
+                return square;
+            });
         },
     }
 });
@@ -72,12 +54,14 @@ function setupInitialBoard() {
         const row = Math.abs(Math.floor(index / 8) - 8);
         const column = (index % 8) + 1;
         const position = `${changeDigitsToLetter(column)}${row}`;
-        const piece = initialPositions[position]
-            ? {
-                  src: initialPositions[position], 
-                  color: row < 5 ? 'white' : 'black'
-              }
-            : null;
-        return { row, column, piece };
+        const square = 
+            {
+                row: row,
+                column: column,
+                pieceSrc: initialPositions[position] ?? null, 
+                pieceColor: initialPositions[position] === null ? null : row < 5 ? 'white' : 'black'
+            };
+            
+        return square;
     });
 }

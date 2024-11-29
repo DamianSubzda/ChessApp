@@ -1,0 +1,6 @@
+{
+    "serverURL": "https://localhost:7168/",
+    "apiURL": "https://localhost:7168/api/",
+    "lobbyHubURL": "https://localhost:7168/lobbyHub",
+    "gameHubURL": "https://localhost:7168/gameHub"
+}

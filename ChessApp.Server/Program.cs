@@ -1,4 +1,5 @@
 using ChessApp.Server.Hubs;
+using ChessApp.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,9 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+
+builder.Services.AddSingleton<GameService>();
+
 
 var app = builder.Build();
 

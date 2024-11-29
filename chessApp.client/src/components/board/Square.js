@@ -3,11 +3,11 @@ import { changeDigitsToLetter } from "../../utils/boardUtil";
 import { useRef } from "react";
 
 function Square(props){
-    const { row, column, piece, onDropPiece } = props;
+    const { row, column, pieceSrc, pieceColor, onDropPiece } = props;
     const pieceRef = useRef(null);
 
     const handleDragStart = (e) => {
-        e.dataTransfer.setData("piece", JSON.stringify({ piece, row, column }));
+        e.dataTransfer.setData("piece", JSON.stringify({ pieceSrc, pieceColor, row, column }));
         
         if (pieceRef.current) {
             pieceRef.current.style.opacity = "0.5";
@@ -38,12 +38,12 @@ function Square(props){
             onDragOver={handleDragOver}
             
         >
-            {piece && 
-            <div className="piece" id={`${piece}`} 
+            {pieceSrc && 
+            <div className="piece" id={`${row}${column}`} 
                 ref={pieceRef} draggable 
                 onDragStart={handleDragStart} 
                 onDragEnd={handleDragEnd}>
-                <img src={`/assets/pieces/neo/${piece.src}`} alt="" />
+                <img src={`/assets/pieces/neo/${pieceSrc}`} alt="" />
             </div>}
             { column === 1 || row === 1  ? <div className="notation">
                 <p>{changeDigitsToLetter(column)}{row}</p>

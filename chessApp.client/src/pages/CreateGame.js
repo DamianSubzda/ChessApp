@@ -1,28 +1,61 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createLobbyConnection } from "../hubs/lobbyHubConnection";
+import config from "./../config.json"
+import { useNavigate } from "react-router-dom";
 
 function CreateGame() {
     const gameRef = useRef(null);
     const connectionRef = useRef(null);
+    const navigate = useNavigate();
 
-    function initialConnection(){
-        connectionRef.current = createLobbyConnection();
+    const [gameId, setGameId] = useState("");
 
-        connectionRef.current.start()
-            .then(() => {
-                console.log("Connected to SignalR hub!");
-                return connectionRef.current.invoke("CreateGame", "Player 1");
-            })
-            .then((createdGame) => {
-                gameRef.current = createdGame;
-            }).catch(() => { });
+    const handleGameCreate = (game) => {
+        gameRef.current = game;
+        setGameId(game.gameId)
     }
 
-    function handleBeforeUnload(event){
+    const handleGameStart = (game) => {
+        localStorage.setItem("Game", JSON.stringify(game));
+        navigate(`/game/${gameRef.current.gameId}`);
+    }
+
+    const handleConnectionStart = () => {
+        console.log("Connected to SignalR hub!");
+                const playerName = localStorage.getItem("PlayerName");
+                if (playerName){
+                    return connectionRef.current.invoke("CreateGame");
+                } else {
+                    navigate("/player-name")
+                }
+    }
+
+    const handleConnectionClose = () => {
         if (gameRef.current) {
             const payload = JSON.stringify(gameRef.current);
             const blob = new Blob([payload], { type: 'application/json' });
-            navigator.sendBeacon("https://localhost:7168/api/abandon-game", blob);
+            navigator.sendBeacon(`${config.apiURL}abandon-game`, blob);
+        }
+    }
+
+    const initialConnection = () => {
+        const connection = createLobbyConnection();
+        connectionRef.current = connection;
+
+        connection.start().then(handleConnectionStart).catch(() => { });
+        
+        connection.on("GameCreated", handleGameCreate);
+        connection.on("GameStarted", handleGameStart);
+
+        connection.onclose(handleConnectionClose);
+    }
+
+    const handleBeforeUnload = (event) => {
+        
+        if (gameRef.current) {
+            const payload = JSON.stringify(gameRef.current);
+            const blob = new Blob([payload], { type: 'application/json' });
+            navigator.sendBeacon(`${config.apiURL}abandon-game`, blob);
         }
 
         if (connectionRef.current) {
@@ -31,23 +64,16 @@ function CreateGame() {
     };
 
     useEffect(() => {
-        console.log("Create");
         initialConnection();
         window.addEventListener("beforeunload", handleBeforeUnload);
 
         return () => {
-            console.log("RETURN ");
             window.removeEventListener("beforeunload", handleBeforeUnload);
             if (gameRef.current) {
-                console.log("BEAACON");
 
                 const payload = JSON.stringify(gameRef.current);
                 const blob = new Blob([payload], { type: 'application/json' });
-                navigator.sendBeacon("https://localhost:7168/api/abandon-game", blob);
-
-                // connection.invoke("AbandonGame", gameRef.current.gameId).catch((err) =>
-                //     console.error("Error abandoning game:", err)
-                // );
+                navigator.sendBeacon(`${config.apiURL}abandon-game`, blob);
             }
 
             connectionRef.current.stop().catch((err) =>
@@ -56,7 +82,7 @@ function CreateGame() {
         };
     }, []);
 
-    return <h1>Waiting for player to join...</h1>;
+    return <h1>Waiting for player to join {gameId}...</h1>;
 }
 
 export default CreateGame;

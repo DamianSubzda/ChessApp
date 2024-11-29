@@ -2,18 +2,21 @@ import "./GameList.scss"
 import { Link } from "react-router-dom";
 import GameRecord from "./GameRecord";
 
-function GameList(props){
+function GameList({games, joinGame}){
     return (
         <>
             <Link to="/">Return</Link>
             <div className="lobby-panel">
                 
                 <h1>Current open games:</h1>
-                <table>
-                    {props.games.map((game) => (
-                        <GameRecord key={game.gameId}/>
+                <div>
+                    {games.map((game) => (
+                        <div key={game.gameId}>
+                            {/* <GameRecord/> */}
+                            <button onClick={() => joinGame(game)}>JOIN | {game.gameId}</button>
+                        </div>
                     ))}
-                </table>
+                </div>
             </div>
         </>
     );
