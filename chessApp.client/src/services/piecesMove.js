@@ -60,7 +60,9 @@ function checkPawn(pieceData, target, squares){
     else{
         //black pawn
         if (pieceData.column !== target.column){
-            //sprawdzenie zbicia
+            if (Math.abs(pieceData.column - target.column) === 1 && target.row === pieceData.row - 1){
+                return checkIfPawnCanTake(pieceData, target, squares);
+            }
             return false;
         }
         if (target.row === pieceData.row - 2){

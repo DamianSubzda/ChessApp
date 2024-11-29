@@ -54,12 +54,17 @@ function setupInitialBoard() {
         const row = Math.abs(Math.floor(index / 8) - 8);
         const column = (index % 8) + 1;
         const position = `${changeDigitsToLetter(column)}${row}`;
+        const pieceSrc = initialPositions[position] ?? null;
         const square = 
             {
                 row: row,
                 column: column,
-                pieceSrc: initialPositions[position] ?? null, 
-                pieceColor: initialPositions[position] === null ? null : row < 5 ? 'white' : 'black'
+                pieceSrc: pieceSrc,
+                pieceColor: pieceSrc
+                ? row < 5
+                    ? 'white'
+                    : 'black'
+                : null
             };
             
         return square;
