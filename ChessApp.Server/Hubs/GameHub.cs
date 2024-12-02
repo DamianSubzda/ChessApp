@@ -80,7 +80,20 @@ namespace ChessApp.Server.Hubs
 
         public async Task MakeMove(string gameId, Move move)
         {
-            await Clients.OthersInGroup(gameId).SendAsync("MadeMove", move);
+            if (move.TimeLeft <=0)
+            {
+                await Clients.OthersInGroup(gameId).SendAsync("PlayerLost");
+            }
+            else
+            {
+                await Clients.OthersInGroup(gameId).SendAsync("MadeMove", move);
+            }
+            
+        }
+
+        public async Task TimeRunOut(string gameId)
+        {
+            await Clients.OthersInGroup(gameId).SendAsync("PlayerLost");
         }
     }
 }

@@ -1,31 +1,36 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 
-function Timer({initialTime, onStop}){
-    const [time, setTime] = useState(initialTime);
-    const [isRunning, setIsRunning] = useState(false);
+function Timer({time, onTimeRunOut, onTimeChange, isTimerRunning}){
 
     useEffect(()=>{
-        if (!isRunning) return;
+        if (!isTimerRunning) return;
 
         const interval = time < 10 
-            ? setInterval(() => setTime(prevTime => Math.max(prevTime - 0.1, 0)), 100)
-            : setInterval(() => setTime(prevTime => Math.max(prevTime - 1, 0)), 1000);
+        ? setInterval(() => {
+            const newTime = Math.max(time - 0.1, 0);
+            onTimeChange(newTime);
+
+            if (newTime === 0) {
+                clearInterval(interval);
+                onTimeRunOut();
+            }
+        }, 100)
+        : setInterval(() => {
+            const newTime = Math.max(time - 1, 0);
+            onTimeChange(newTime);
+
+            if (newTime === 0) {
+                clearInterval(interval);
+                onTimeRunOut();
+            }
+        }, 1000);
 
         return () => clearInterval(interval);
 
-    }, [isRunning, time])
-
-    useEffect(()=>{
-        if (time <= 0) {
-            setIsRunning(false);
-            onStop();
-        }
-
-    }, [time, onStop])
+    }, [isTimerRunning, time, onTimeRunOut, onTimeChange])
 
     function displayTime(){
-
         if (time >= 3600){
             const hours = Math.floor(time/3600)
             const minutes = Math.floor((time % 3600) / 60);
@@ -34,18 +39,21 @@ function Timer({initialTime, onStop}){
         } else if (time >= 10){
             const minutes = Math.floor(time/60);
             const seconds = Math.floor(time % 60);
-            return `${minutes}:${String(seconds).padStart(2, '0')}`;
-        } else {
+            return `${minutes}:${String(seconds).padStart(2, '0')}`; 
+        }
+        else if (time >= 0) {
             const secounds = Math.floor(time);
             const millis = (time - secounds).toFixed(1).slice(2);
             return `0:${secounds}.${millis}`;
+        }
+        else{
+            return `0:00:0`;
         }
     }
 
     return(
         <div>
             <h2>Timer: {displayTime()}</h2>
-            <button onClick={() => setIsRunning(!isRunning)}>Stop/Start</button>
         </div>
     );
 }

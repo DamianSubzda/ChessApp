@@ -7,18 +7,28 @@ import config from "./../config.json";
 import Timer from "./../components/board/Timer"
 import { useDispatch } from "react-redux";
 import { movePiece } from "../store/boardReducer";
+import useCheckMove from "../hooks/useCheckMove";
 
 function GamePage() {
     const { gameId } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const connectionRef = useRef();
+    const checkMove = useCheckMove();
 
     const [isValidGameId, setIsValidGameId] = useState(null);
 
     const [isPlayerPlaying, setPlayerPlaying] = useState(false);
     const [isPlayerWhite, setPlayerColor] = useState(true);
     const [isPlayersMove, setIfPlayerCanMove] = useState(false);
+
+    const [time, setTime] = useState(20);
+    const [enemyTime, setEnemyTime] = useState(20);
+
+    const timeRef = useRef(time);
+
+    const [isTimerRunning, setIsTimerRunning] = useState(false);
+    const [isEnemyTimerRunning, setIsEnemyTimerRunning] = useState(false);
 
     const handlePlayerJoin = (data) => {
         const isWhite = connectionRef.current.connectionId === data.player1.connectionId ? data.player1.isWhite : data.player2.isWhite 
@@ -41,15 +51,85 @@ function GamePage() {
             },
             targetPosition: { row: move.row, column: move.column }
         }));
-    
+        
+        setIsEnemyTimerRunning(false);
+        setIsTimerRunning(true);
+        setEnemyTime(move.timeLeft);
+
         setIfPlayerCanMove(true);
     }
 
-    const handleMakeMove = (move) => {
-        move.timeLeft = 0;
-        //Ustawienie czasu
+    const handleMakeMove = (pieceData, targetPosition) => {
+        if (!isPlayerPlaying || !isPlayersMove) return;
+        if (!checkMove(pieceData, targetPosition)) return;
+
+        dispatch(movePiece({ pieceData, targetPosition }));
+
+        setIsEnemyTimerRunning(true);
+        setIsTimerRunning(false);
+
+        const move = { 
+            timeLeft: timeRef.current,
+            piece: {
+                column: pieceData.column,
+                row: pieceData.row,
+                color: pieceData.pieceColor,
+                src: pieceData.pieceSrc
+            },
+            row: targetPosition.row,
+            column: targetPosition.column
+        };
+        
         connectionRef.current.invoke("MakeMove", gameId, move);
         setIfPlayerCanMove(false);
+    }
+
+    const handleTimeChange = (newTime) => {
+        setTime(newTime);
+        timeRef.current = newTime;
+    }
+
+    const handleEnemyTimeChange = (newTime) => {
+        setEnemyTime(newTime);
+    }
+
+    const handleTimeRunOut = () => {
+        //Przegrana
+        console.log("You lose!");
+
+        setIsTimerRunning(false);
+        setIsEnemyTimerRunning(false);
+        setPlayerPlaying(false);
+        setIfPlayerCanMove(false);
+        connectionRef.current.invoke("TimeRunOut", gameId);
+        
+        alert("You lose on time!");
+    }
+
+    const handleEnemyTimeRunOut = () => {
+        //Wygrana
+        console.log("You won!");
+    }
+
+    const handleWin = () => {
+        console.log("You won!");
+
+        setIsTimerRunning(false);
+        setIsEnemyTimerRunning(false);
+        setPlayerPlaying(false);
+        setIfPlayerCanMove(false);
+
+        alert("Congratulation! You won!");
+    }
+
+    const handleEnemyLeft = () => {
+        console.log("You won! Enemy left!");
+
+        setIsTimerRunning(false);
+        setIsEnemyTimerRunning(false);
+        setPlayerPlaying(false);
+        setIfPlayerCanMove(false);
+        alert("Congratulation! You won! Enemy left!");
     }
 
     useEffect(() => {
@@ -79,6 +159,8 @@ function GamePage() {
         connection.on("GameFull", handleGameFull);
         connection.on("PlayerJoined", handlePlayerJoin);
         connection.on("MadeMove", handleOpponentMove);
+        connection.on("PlayerLost", handleWin);
+        connection.on("PlayerLeft", handleEnemyLeft);
 
         connection.start()
         .then(() => {
@@ -105,14 +187,22 @@ function GamePage() {
 
     return (
         <>
-            <Timer initialTime={600} onStop={() => console.log("Test")}/>
+            <Timer 
+                time={time} 
+                onTimeRunOut={handleTimeRunOut} 
+                onTimeChange={handleTimeChange}
+                isTimerRunning={isTimerRunning}
+                />
             <Chessboard 
                 isPlayerWhite={isPlayerWhite}
-                isPlayerPlaying={isPlayerPlaying}
-                isPlayersMove={isPlayersMove}
                 makeMove={handleMakeMove}
                 />
-            <Timer initialTime={600} onStop={() => console.log("Test")}/>
+            <Timer
+                time={enemyTime} 
+                onTimeRunOut={handleEnemyTimeRunOut} 
+                onTimeChange={handleEnemyTimeChange}
+                isTimerRunning={isEnemyTimerRunning}
+                />
         </>
     );
 }
