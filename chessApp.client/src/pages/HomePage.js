@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import "./MenuPage.scss"
+import "./HomePage.scss"
 
-function MenuPage(){
+function HomePage(){
     const navigate = useNavigate();
 
     const handleRedirect = (path) => {
@@ -15,11 +15,13 @@ function MenuPage(){
     }
 
     return(
-        <div className="panel">
-            <button id="button" onClick={() => handleRedirect("/new-game")}>New Game</button>
-            <button id="button" onClick={() => handleRedirect("/lobby")}>Lobby</button>
+        <div className="home-page">
+            <div className="panel">
+                <button id="button" onClick={() => handleRedirect("/new-game")}>New Game</button>
+                <button id="button" onClick={() => handleRedirect("/lobby")}>Lobby</button>
+            </div>
         </div>
     );
 }
 
-export default MenuPage;
+export default HomePage;
