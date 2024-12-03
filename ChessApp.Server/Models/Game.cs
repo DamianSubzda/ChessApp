@@ -3,6 +3,8 @@
     public class Game
     {
         public required string GameId { get; set; }
+        public required string CreatedBy { get; set; }
+        public TimeOnly CreatedTimeAt { get; set; }
         public Player? Player1 { get; set; }
         public Player? Player2 { get; set; }
         public required GameStatus Status { get; set; }

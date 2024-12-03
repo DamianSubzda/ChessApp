@@ -2,6 +2,7 @@
 using ChessApp.Server.Models;
 using ChessApp.Server.Services;
 using Microsoft.AspNetCore.SignalR;
+using System;
 
 namespace ChessApp.Server.Hubs
 {
@@ -17,13 +18,15 @@ namespace ChessApp.Server.Hubs
             _lobbyService = lobbyService;
         }
 
-        public async Task<Game?> CreateGame()
+        public async Task<Game?> CreateGame(string createdBy)
         {
             string gameId = Guid.NewGuid().ToString();
 
             var game = new Game
             {
                 GameId = gameId,
+                CreatedBy = createdBy,
+                CreatedTimeAt = TimeOnly.FromDateTime(DateTime.Now),
                 Status = GameStatus.Waiting
             };
 
