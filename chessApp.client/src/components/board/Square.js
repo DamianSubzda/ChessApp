@@ -1,6 +1,7 @@
 import "./Square.scss";
 import { changeDigitsToLetter } from "../../utils/boardUtil";
 import { useRef } from "react";
+import { memo } from "react";
 
 function Square(props) {
     const { row, column, pieceSrc, pieceColor, onDropPiece } = props;
@@ -87,4 +88,4 @@ function Square(props) {
     );
 }
 
-export default Square;
+export default memo(Square);
