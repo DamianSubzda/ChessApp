@@ -1,5 +1,6 @@
 import NameForm from "../components/UI/NameForm";
 import { useLocation, useNavigate } from "react-router-dom";
+import "./NameFormPage.scss"
 
 function NameFormPage({ path }){
     const navigate = useNavigate();
@@ -17,7 +18,9 @@ function NameFormPage({ path }){
     }
 
     return (
-        <NameForm onSubmit={onSubmit}/>
+        <div className="name-form-page">
+            <NameForm onSubmit={onSubmit}/>
+        </div>
     );
 }
 

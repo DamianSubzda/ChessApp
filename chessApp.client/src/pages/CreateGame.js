@@ -24,7 +24,7 @@ function CreateGame() {
         console.log("Connected to SignalR hub!");
                 const playerName = localStorage.getItem("PlayerName");
                 if (playerName){
-                    return connectionRef.current.invoke("CreateGame");
+                    return connectionRef.current.invoke("CreateGame", playerName);
                 } else {
                     navigate("/player-name")
                 }
@@ -82,7 +82,13 @@ function CreateGame() {
         };
     }, []);
 
-    return <h1>Waiting for player to join {gameId}...</h1>;
+    return (
+        <div style={{display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: "100%"}}>
+            <h1>Waiting for player to join...</h1>
+            <h2>GameId: {gameId}</h2>
+        </div>
+        
+    );
 }
 
 export default CreateGame;

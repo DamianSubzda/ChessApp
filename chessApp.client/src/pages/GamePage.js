@@ -8,6 +8,7 @@ import Timer from "./../components/board/Timer"
 import { useDispatch } from "react-redux";
 import { movePiece } from "../store/boardReducer";
 import useCheckMove from "../hooks/useCheckMove";
+import "./GamePage.scss"
 
 function GamePage() {
     const { gameId } = useParams();
@@ -186,7 +187,7 @@ function GamePage() {
     }
 
     return (
-        <>
+        <div className="game-page">
             <Timer 
                 time={time} 
                 onTimeRunOut={handleTimeRunOut} 
@@ -203,7 +204,7 @@ function GamePage() {
                 onTimeChange={handleEnemyTimeChange}
                 isTimerRunning={isEnemyTimerRunning}
                 />
-        </>
+        </div>
     );
 }
 

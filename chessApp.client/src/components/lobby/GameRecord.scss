@@ -1,0 +1,31 @@
+.record {
+    display: grid;
+    grid-template-columns: 1fr 4fr 3fr 8fr 3fr;
+    text-align: center;
+    gap: 1rem;
+    padding: 0.3rem;
+    width: inherit;
+    border-bottom: 1px solid rgba($color: #000000, $alpha: .3);
+    background-color:antiquewhite;
+    
+    p {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    button {
+        border-radius: 1rem;
+        background-color: bisque;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        font-weight: 700;
+        margin-top: 0.4rem;
+        margin-bottom: 0.4rem;
+        margin-right: 0.5rem;
+        margin-left: 0.5rem;
+
+        &:hover{
+            cursor: pointer;
+        }
+    }
+}

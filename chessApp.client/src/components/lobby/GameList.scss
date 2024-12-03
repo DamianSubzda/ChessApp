@@ -20,4 +20,24 @@ table, th, td {
     justify-content: space-between;
   }
 
-  
+
+
+.header{
+  display: grid;
+  grid-template-columns: 1fr 4fr 3fr 8fr 3fr;
+  text-align: center;
+  gap: 1rem;
+  border-bottom: 1px solid black;
+  border-top-left-radius: 10px;
+  background-color:antiquewhite;
+  border-top-right-radius: 10px;
+  font-weight: 600;
+  padding: 0 0.3rem 0 0.3rem;
+}
+
+.game-list{
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 5vw;
+  width: 90vw;
+}

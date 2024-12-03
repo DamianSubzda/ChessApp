@@ -13,7 +13,7 @@ function NameForm({ onSubmit }){
     }
 
     return(
-        <div>
+        <div style={{backgroundColor: `rgb(245, 245, 245);`, padding: `1rem`}}>
             <p>Name:</p>
             <input value={name} onChange={handleInputChange} />
             <button onClick={handleSubmit}>Submit</button>
