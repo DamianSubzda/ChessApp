@@ -1,13 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { changeDigitsToLetter } from '../utils/boardUtil';
 
-const initialState = {
-    squares: [],
-};
-
 const boardSlice = createSlice({
     name: 'board',
-    initialState,
+    initialState: { squares: [] },
     reducers: {
         setupBoard(state) {
             state.squares = setupInitialBoard();
@@ -25,9 +21,11 @@ const boardSlice = createSlice({
             }
         
             state.squares = state.squares.map((square) => {
+                //Dodanie figury
                 if (square.row === targetPosition.row && square.column === targetPosition.column) {
                     return { ...square, pieceSrc: pieceData.pieceSrc, pieceColor: pieceData.pieceColor };
                 }
+                //Usunięcie figury
                 if (square.row === pieceData.row && square.column === pieceData.column) {
                     return { ...square, pieceSrc: null, pieceColor: null };
                 }
@@ -49,7 +47,11 @@ function setupInitialBoard() {
         'A8': 'br.png', 'H8': 'br.png', 'B8': 'bn.png', 'G8': 'bn.png', 'C8': 'bb.png', 'F8': 'bb.png', 'D8': 'bq.png', 'E8': 'bk.png',
         'A7': 'bp.png', 'H7': 'bp.png', 'B7': 'bp.png', 'G7': 'bp.png', 'C7': 'bp.png', 'F7': 'bp.png', 'D7': 'bp.png', 'E7': 'bp.png',
     };
-
+    // const initialPositions = {
+    //     'B1': 'wq.png', 'E1': 'wk.png',
+    //     'A8': 'bk.png',
+    // };
+    
     return Array.from({ length: 64 }, (_, index) => {
         const row = Math.abs(Math.floor(index / 8) - 8);
         const column = (index % 8) + 1;

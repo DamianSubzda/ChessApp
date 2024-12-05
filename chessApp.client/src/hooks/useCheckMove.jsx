@@ -1,12 +1,26 @@
 import  { useSelector } from "react-redux"
-import checkMove from "../services/piecesMove";
+import { checkIfPlayersMoveIsCorrect, checkIfPlayerWillBeCheckmated, checkIfPlayerWillBeInPat } from "../services/piecesMove";
 
 function useCheckMove() {
     const squares = useSelector((state) => state.board.squares);
 
-    return (pieceData, targetPosition) => {
-        return checkMove(pieceData, targetPosition, squares);
+    return (pieceData, target, isPlayerWhite) => {
+        return checkIfPlayersMoveIsCorrect(pieceData, target, isPlayerWhite, squares);
     }
 }
 
-export default useCheckMove;
+function useCheckPat() {
+    const squares = useSelector((state) => state.board.squares);
+    return (pieceData, target) => {
+        return checkIfPlayerWillBeInPat(pieceData, target, squares)
+    }
+}
+
+function useCheckMat() {
+    const squares = useSelector((state) => state.board.squares);
+    return (pieceData, target) => {
+        return checkIfPlayerWillBeCheckmated(pieceData, target, squares);
+    }
+}
+
+export { useCheckMove, useCheckPat, useCheckMat };

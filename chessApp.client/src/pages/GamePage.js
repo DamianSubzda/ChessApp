@@ -7,7 +7,7 @@ import config from "./../config.json";
 import Timer from "./../components/board/Timer"
 import { useDispatch } from "react-redux";
 import { movePiece } from "../store/boardReducer";
-import useCheckMove from "../hooks/useCheckMove";
+import { useCheckMove, useCheckPat, useCheckMat } from "../hooks/useCheckMove";
 import "./GamePage.scss"
 
 function GamePage() {
@@ -16,6 +16,8 @@ function GamePage() {
     const dispatch = useDispatch();
     const connectionRef = useRef();
     const checkMove = useCheckMove();
+    const checkPat = useCheckPat();
+    const checkMat = useCheckMat();
 
     const [isValidGameId, setIsValidGameId] = useState(null);
 
@@ -23,8 +25,8 @@ function GamePage() {
     const [isPlayerWhite, setPlayerColor] = useState(true);
     const [isPlayersMove, setIfPlayerCanMove] = useState(false);
 
-    const [time, setTime] = useState(20);
-    const [enemyTime, setEnemyTime] = useState(20);
+    const [time, setTime] = useState(600);
+    const [enemyTime, setEnemyTime] = useState(600);
 
     const timeRef = useRef(time);
 
@@ -62,7 +64,7 @@ function GamePage() {
 
     const handleMakeMove = (pieceData, targetPosition) => {
         if (!isPlayerPlaying || !isPlayersMove) return;
-        if (!checkMove(pieceData, targetPosition)) return;
+        if (!checkMove(pieceData, targetPosition, isPlayerWhite)) return;
 
         dispatch(movePiece({ pieceData, targetPosition }));
 
@@ -83,6 +85,16 @@ function GamePage() {
         
         connectionRef.current.invoke("MakeMove", gameId, move);
         setIfPlayerCanMove(false);
+
+        if (checkMat(pieceData, targetPosition)){
+            alert("MAT"); //Send signalR
+            setPlayerPlaying(false);
+        }
+
+        if (checkPat(pieceData, targetPosition)){
+            alert("PAT"); //Send signalR
+            setPlayerPlaying(false);
+        }
     }
 
     const handleTimeChange = (newTime) => {
