@@ -1,3 +1,4 @@
+@import "./../../styles/variables.scss";
 
 body.grabbing, body.grabbing * {
     cursor: grabbing !important;
@@ -19,19 +20,25 @@ body.grabbing, body.grabbing * {
 }
 
 .square {
-    border: 1px solid black;
-    width: 80px;
-    height: 80px;
+    width: $square-size;
+    height: $square-size;
     display: flex;
     flex-direction: column;
-    justify-content: left;
-    align-items: end;
+    justify-content: center;
+    align-items: center;
+}
+#black {
+    background-color: $black-square-color;
+}
+
+#white {
+    background-color: $white-square-color;
 }
 
 .piece {
     position: absolute;
-    width: inherit;
-    height: inherit;
+    width: calc($square-size * 0.95);
+    height: calc($square-size * 0.95);;
     z-index: 999;
 
     img {
@@ -49,6 +56,6 @@ body.grabbing, body.grabbing * {
 
 #dragging-piece {
     pointer-events: none;
-    transform: scale(1.2);
+    transform: scale(1.15);
 }
 

@@ -2,7 +2,6 @@
 using ChessApp.Server.Models;
 using ChessApp.Server.Services;
 using Microsoft.AspNetCore.SignalR;
-using System.Collections.Concurrent;
 
 namespace ChessApp.Server.Hubs
 {

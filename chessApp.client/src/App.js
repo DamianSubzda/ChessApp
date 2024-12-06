@@ -7,6 +7,7 @@ import HomePage from "./pages/HomePage";
 import CreateGame from "./pages/CreateGame";
 import NameFormPage from "./pages/NameFormPage";
 import Navbar from "./components/navbar/Navbar"
+import "./App.css"
 
 function App() {
   return (

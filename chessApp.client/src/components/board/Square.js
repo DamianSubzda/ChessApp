@@ -66,7 +66,7 @@ function Square(props) {
             className="square"
             data-row={row}
             data-column={column}
-            style={{ backgroundColor: (row + column) % 2 === 1 ? "white" : "green" }}
+            id={(row + column) % 2 === 1 ? "white" : "black"}
         >
             {pieceSrc && (
                 <div

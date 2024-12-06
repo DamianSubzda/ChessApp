@@ -9,6 +9,7 @@ import { useDispatch } from "react-redux";
 import { movePiece } from "../store/boardReducer";
 import { useCheckMove, useCheckPat, useCheckMat } from "../hooks/useCheckMove";
 import "./GamePage.scss"
+import MovesHistory from "../components/board/MovesHistory";
 
 function GamePage() {
     const { gameId } = useParams();
@@ -200,22 +201,36 @@ function GamePage() {
 
     return (
         <div className="game-page">
-            <Timer 
-                time={time} 
-                onTimeRunOut={handleTimeRunOut} 
-                onTimeChange={handleTimeChange}
-                isTimerRunning={isTimerRunning}
-                />
+            <div className="game-page__left">
+                <div className="taken-pieces taken-pieces--enemy">
+                    taken enemy pieces
+                </div>
+                <Timer
+                    className="timer"
+                    time={enemyTime} 
+                    onTimeRunOut={handleEnemyTimeRunOut} 
+                    onTimeChange={handleEnemyTimeChange}
+                    isTimerRunning={isEnemyTimerRunning}
+                    />
+                <Timer 
+                    className="timer"
+                    time={time} 
+                    onTimeRunOut={handleTimeRunOut} 
+                    onTimeChange={handleTimeChange}
+                    isTimerRunning={isTimerRunning}
+                    />
+                <div className="taken-pieces taken-pieces--player">
+                    taken pieces
+                </div>
+            </div>
+            
             <Chessboard 
                 isPlayerWhite={isPlayerWhite}
                 makeMove={handleMakeMove}
                 />
-            <Timer
-                time={enemyTime} 
-                onTimeRunOut={handleEnemyTimeRunOut} 
-                onTimeChange={handleEnemyTimeChange}
-                isTimerRunning={isEnemyTimerRunning}
-                />
+            <div className="game-page__right">
+                <MovesHistory />
+            </div>
         </div>
     );
 }

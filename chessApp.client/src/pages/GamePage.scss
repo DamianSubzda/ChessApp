@@ -1,7 +1,43 @@
+@import "./../styles/variables.scss";
+
 .game-page {
     width: 100%;
     height: 100%;
-    display: flex;
+    display: grid;
+    grid-template-columns: 2fr auto 3fr;
     justify-content: center;
     align-items: center;
 }
+
+.game-page__left {
+    height: calc($square-size * 8);
+    display: grid;
+    grid-template-rows: 1fr auto auto 1fr;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    justify-content: end;
+    justify-items: center;
+    width: 100%;
+}
+
+.game-page_right {
+    display: block;
+}
+
+.taken-pieces{
+    box-sizing: border-box;
+    width: 100%;
+    display: flex;
+    justify-content: end;
+    padding-top: 5px;
+    padding-right: 5px;
+}
+
+.taken-pieces--enemy{
+    align-items: start;
+}
+
+.taken-pieces--player{
+    align-items: end;
+}
+

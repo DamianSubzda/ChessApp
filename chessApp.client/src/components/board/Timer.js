@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-
+import "./Timer.scss"
 
 function Timer({time, onTimeRunOut, onTimeChange, isTimerRunning}){
 
@@ -52,7 +52,7 @@ function Timer({time, onTimeRunOut, onTimeChange, isTimerRunning}){
     }
 
     return(
-        <div>
+        <div className="timer">
             <h2>Timer: {displayTime()}</h2>
         </div>
     );
