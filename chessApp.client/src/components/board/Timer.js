@@ -53,7 +53,7 @@ function Timer({time, onTimeRunOut, onTimeChange, isTimerRunning}){
 
     return(
         <div className="timer">
-            <h2>Timer: {displayTime()}</h2>
+            "clock icon"{displayTime()}
         </div>
     );
 }

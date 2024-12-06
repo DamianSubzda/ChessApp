@@ -26,6 +26,7 @@ function GamePage() {
     const [isPlayerWhite, setPlayerColor] = useState(true);
     const [isPlayersMove, setIfPlayerCanMove] = useState(false);
 
+    const [moveCounter, setMoveCounter] = useState(1);
     const [time, setTime] = useState(600);
     const [enemyTime, setEnemyTime] = useState(600);
 
@@ -71,8 +72,9 @@ function GamePage() {
 
         setIsEnemyTimerRunning(true);
         setIsTimerRunning(false);
-
+        
         const move = { 
+            lp: moveCounter,
             timeLeft: timeRef.current,
             piece: {
                 column: pieceData.column,
@@ -85,8 +87,10 @@ function GamePage() {
         };
         
         connectionRef.current.invoke("MakeMove", gameId, move);
+        setMoveCounter(moveCounter + 1);
         setIfPlayerCanMove(false);
 
+        
         if (checkMat(pieceData, targetPosition)){
             alert("MAT"); //Send signalR
             setPlayerPlaying(false);

@@ -5,6 +5,7 @@
     height: 100%;
     display: grid;
     grid-template-columns: 2fr auto 3fr;
+    gap: 10px;
     justify-content: center;
     align-items: center;
 }
@@ -21,7 +22,9 @@
 }
 
 .game-page_right {
-    display: block;
+    align-items: center;
+    justify-content: center;
+    display: flex;
 }
 
 .taken-pieces{
@@ -30,7 +33,6 @@
     display: flex;
     justify-content: end;
     padding-top: 5px;
-    padding-right: 5px;
 }
 
 .taken-pieces--enemy{
@@ -41,3 +43,10 @@
     align-items: end;
 }
 
+.timer{
+    background-color: grey;
+    border: 2px solid black;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+}
