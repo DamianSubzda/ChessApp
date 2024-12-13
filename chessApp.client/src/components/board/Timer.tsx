@@ -1,7 +1,17 @@
 import { useEffect } from "react";
 import "./Timer.scss"
+import React from "react";
+import ClockIcon from "../icons/ClockIcon.tsx";
 
-function Timer({time, onTimeRunOut, onTimeChange, isTimerRunning}){
+interface TimerProps {
+    className?: string,
+    time: number,
+    onTimeRunOut: () => void,
+    onTimeChange: (newTime: number) => void,
+    isTimerRunning: boolean
+}
+
+function Timer({time, onTimeRunOut, onTimeChange, isTimerRunning}: TimerProps){
 
     useEffect(()=>{
         if (!isTimerRunning) return;
@@ -53,7 +63,10 @@ function Timer({time, onTimeRunOut, onTimeChange, isTimerRunning}){
 
     return(
         <div className="timer">
-            "clock icon"{displayTime()}
+            <div className="timer__content">
+                <ClockIcon />
+                <p>{displayTime()}</p>
+            </div>
         </div>
     );
 }

@@ -1,10 +1,14 @@
 @import "./../../styles/variables.scss";
 
+.moves-history-container{
+    height: inherit;
+    width: 100%;
+}
+
 .table-container {
     max-height: calc(5*$square-size);
     overflow-y: auto;
     scrollbar-width: none;
-    width: 90%;
     
 }
 .table__element{

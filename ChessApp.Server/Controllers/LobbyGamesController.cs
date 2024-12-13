@@ -12,14 +12,14 @@ namespace ChessApp.Server.Controllers
     public class LobbyGamesController : ControllerBase
     {
         private readonly IHubContext<LobbyHub> _hubContext;
-        private readonly GameService _lobbyService;
-        public LobbyGamesController(IHubContext<LobbyHub> hubContext, GameService lobbyService)
+        private readonly GameService _gameService;
+        public LobbyGamesController(IHubContext<LobbyHub> hubContext, GameService gameService)
         {
-            _lobbyService = lobbyService;
+            _gameService = gameService;
             _hubContext = hubContext;
         }
 
-        [HttpPost("abandon-game")]
+        [HttpPost("abandon-new-game")]
         public async Task<IActionResult> AbandonGame([FromBody] Game game)
         {
             try
@@ -29,29 +29,28 @@ namespace ChessApp.Server.Controllers
                     return BadRequest("Invalid game data.");
                 }
 
-                _lobbyService.SetGameStatusToAbandoned(game.GameId);
+                _gameService.SetGameStatusToAbandoned(game.GameId);
 
-                await _hubContext.Clients.All.SendAsync("GameRemoved", _lobbyService.GetGame(game.GameId));
+                await _hubContext.Clients.All.SendAsync("GameRemoved", _gameService.GetGame(game.GameId));
                 return Ok("Game abandoned successfully.");
             }
-            catch(GameNotFoundException ex)
+            catch (GameNotFoundException ex)
             {
                 return NotFound(ex.Message);
             }
-
 
         }
 
         [HttpPost("join-game")]
         public IActionResult JoinGame([FromBody] string gameId)
         {
-            //TODO
-            if(_lobbyService.GetStartedGame(gameId) != null)
+            if (_gameService.GetStartedGame(gameId) != null)
             {
                 return Ok("Game joined seccessfully.");
             }
 
             return NotFound("Game not found!");
         }
+
     }
 }

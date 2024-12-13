@@ -18,7 +18,7 @@ namespace ChessApp.Server.Hubs
         public async Task JoinGameRoom(string gameId, string playerName)
         {
             await Semaphore.WaitAsync();
-            
+
             try
             {
                 var game = _gameService.GetGame(gameId) ?? throw new GameNotFoundException(gameId);
@@ -60,7 +60,7 @@ namespace ChessApp.Server.Hubs
             }
             catch (GameNotFoundException ex)
             {
-                //TODO: Może jakieś powiadomienie, że gra nie została znaleziona
+                await Clients.Caller.SendAsync("GameNotFound", gameId);
                 return;
             }
             finally
@@ -69,17 +69,24 @@ namespace ChessApp.Server.Hubs
             }
         }
 
-        public async Task LeaveGameRoom(string gameId) //To do edycji ale to później. Wychodzenie graczy itp.
+        public async Task LeaveGameRoom(string gameId)
         {
-            var game = _gameService.GetGame(gameId) ?? throw new GameNotFoundException(gameId);
-            game.Status = GameStatus.Abandoned;
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, gameId);
-            await Clients.Group(gameId).SendAsync("PlayerLeft", Context.ConnectionId);
+            try
+            {
+                var game = _gameService.GetGame(gameId) ?? throw new GameNotFoundException(gameId);
+                game.Status = GameStatus.Abandoned;
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, gameId);
+                await Clients.Group(gameId).SendAsync("PlayerLeft");
+            }
+            catch (GameNotFoundException ex)
+            {
+                return;
+            }
         }
 
         public async Task MakeMove(string gameId, Move move)
         {
-            if (move.TimeLeft <=0)
+            if (move.TimeLeft <= 0)
             {
                 await Clients.OthersInGroup(gameId).SendAsync("PlayerLost");
             }
@@ -87,12 +94,26 @@ namespace ChessApp.Server.Hubs
             {
                 await Clients.OthersInGroup(gameId).SendAsync("MadeMove", move);
             }
-            
+
         }
 
         public async Task TimeRunOut(string gameId)
         {
             await Clients.OthersInGroup(gameId).SendAsync("PlayerLost");
+            _gameService.SetGameStatusToEnded(gameId);
         }
+
+        public async Task PlayerCheckmated(string gameId)
+        {
+            await Clients.OthersInGroup(gameId).SendAsync("Checkmate");
+            _gameService.SetGameStatusToEnded(gameId);
+        }
+
+        public async Task PlayerInPat(string gameId)
+        {
+            await Clients.OthersInGroup(gameId).SendAsync("Pat");
+            _gameService.SetGameStatusToEnded(gameId);
+        }
+
     }
 }

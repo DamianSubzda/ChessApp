@@ -32,6 +32,7 @@ function LobbyPage(){
 
     const handleGameStart = (game) => {
         localStorage.setItem("Game", JSON.stringify(game));
+        connectionRef.current.stop();
         navigate(`/game/${game.gameId}`);
     }
 
@@ -43,9 +44,7 @@ function LobbyPage(){
                 console.log("Connected to lobby!");
                 connection.invoke("GetCurrentWaitingGames");
             })
-            .catch((err) => {
-                console.log("Lobby connection failed: ", err);
-            });
+            .catch(() => { });
         
         connection.on("GameAdded", handleGameAdded);
         connection.on("GameRemoved", handleGameRemoved);

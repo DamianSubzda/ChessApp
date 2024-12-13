@@ -1,14 +1,14 @@
 import React from "react";
 import { useEffect } from "react";
-import Square from "./Square";
+import Square from "./Square.tsx";
 import "./Chessboard.scss"
-
+import type { AppState } from "./../../store/store.ts";
 import { useDispatch, useSelector } from "react-redux";
-import { setupBoard, reverseBoard } from "../../store/boardReducer";
+import { setupBoard, reverseBoard } from "../../store/boardReducer.ts";
 
 function Chessboard({ isPlayerWhite, makeMove }) {
     const dispatch = useDispatch();
-    const squares = useSelector((state) => state.board.squares);
+    const squares = useSelector((state: AppState) => state.board.squares);
 
     useEffect(() => {
         dispatch(setupBoard());
@@ -20,10 +20,7 @@ function Chessboard({ isPlayerWhite, makeMove }) {
             {squares.map((square, index) => (
                 <Square
                     key={index}
-                    row={square.row}
-                    column={square.column}
-                    pieceSrc={square.pieceSrc}
-                    pieceColor ={square.pieceColor}
+                    square={square}
                     onDropPiece={makeMove}
                 />
             ))}

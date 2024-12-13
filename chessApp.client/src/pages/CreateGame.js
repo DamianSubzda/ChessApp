@@ -34,7 +34,7 @@ function CreateGame() {
         if (gameRef.current) {
             const payload = JSON.stringify(gameRef.current);
             const blob = new Blob([payload], { type: 'application/json' });
-            navigator.sendBeacon(`${config.apiURL}abandon-game`, blob);
+            navigator.sendBeacon(`${config.apiURL}abandon-new-game`, blob);
         }
     }
 
@@ -55,7 +55,7 @@ function CreateGame() {
         if (gameRef.current) {
             const payload = JSON.stringify(gameRef.current);
             const blob = new Blob([payload], { type: 'application/json' });
-            navigator.sendBeacon(`${config.apiURL}abandon-game`, blob);
+            navigator.sendBeacon(`${config.apiURL}abandon-new-game`, blob);
         }
 
         if (connectionRef.current) {
@@ -73,7 +73,7 @@ function CreateGame() {
 
                 const payload = JSON.stringify(gameRef.current);
                 const blob = new Blob([payload], { type: 'application/json' });
-                navigator.sendBeacon(`${config.apiURL}abandon-game`, blob);
+                navigator.sendBeacon(`${config.apiURL}abandon-new-game`, blob);
             }
 
             connectionRef.current.stop().catch((err) =>

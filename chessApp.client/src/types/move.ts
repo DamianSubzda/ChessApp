@@ -1,6 +1,12 @@
+import { Piece } from "./Piece";
+
 export type Move = {
-    lp: number;
-    move: string;
-    player: "white" | "black";
+    rowFrom: number,
+    columnFrom: number,
+    rowTo: number,
+    columnTo: number,
+    moveNotation: string,
+    piece: Piece,
+    timeLeft: number,
 };
 
