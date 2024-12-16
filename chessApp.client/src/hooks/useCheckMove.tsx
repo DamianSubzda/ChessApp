@@ -1,5 +1,5 @@
 import  { useSelector } from "react-redux"
-import { checkIfPlayersMoveIsCorrect, checkIfPlayerWillBeCheckmated, checkIfPlayerWillBeInPat } from "../services/piecesMove.ts";
+import { checkIfPlayersMoveIsCorrect, checkIfPlayerWillBeCheckmated, checkIfPlayerWillBeInPat, checkIfPlayerWillBeInCheck } from "../services/piecesMove.ts";
 import { AppState } from "../store/store.ts";
 import { Move } from "../types/Move.ts";
 
@@ -8,6 +8,14 @@ function useCheckMove() {
 
     return (move: Move) => {
         return checkIfPlayersMoveIsCorrect(move, squares);
+    }
+}
+
+function useCheck() {
+    const squares = useSelector((state: AppState) => state.board.squares);
+
+    return (move: Move) => {
+        return checkIfPlayerWillBeInCheck(move, squares);
     }
 }
 
@@ -25,4 +33,4 @@ function useCheckMat() {
     }
 }
 
-export { useCheckMove, useCheckPat, useCheckMat };
+export { useCheckMove, useCheckPat, useCheckMat, useCheck };

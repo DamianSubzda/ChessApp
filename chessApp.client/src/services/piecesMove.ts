@@ -25,6 +25,11 @@ function checkIfPlayerWillBeCheckmated(move: Move, squares: Square[]) {
     return isKingInCheckmate(enemyColor, simulatedSquares);
 }
 
+function checkIfPlayerWillBeInCheck(move: Move, squares: Square[]) {
+    const simulatedSquares = simulateMove(move, squares);
+    return isKingInCheck(move.piece.color=== "white" ? "black" : "white", simulatedSquares);
+}
+
 function checkIfPlayerWillBeInPat(move: Move, squares: Square[]) {
     //Possition prediction.
     const simulatedSquares = simulateMove(move, squares);
@@ -66,7 +71,7 @@ function checkPieces(move: Move, squares: Square[]){
     }
 }
 
-function isKingInCheck(color: string, squares: Square[]) { 
+function isKingInCheck(color: string, squares: Square[]) {
     // Pole króla 
     const kingsSquare = squares.find(
         (sq) => sq.piece && sq.piece.src[1] === "k" && sq.piece.color === color
@@ -74,7 +79,7 @@ function isKingInCheck(color: string, squares: Square[]) {
 
     const enemyColor = color === "white" ? "black" : "white";
 
-    for (const square of squares){
+    for (const square of squares) {
         if (square.piece?.color === enemyColor && kingsSquare) {
             const move = {
                 rowFrom: square.row,
@@ -93,7 +98,6 @@ function isKingInCheck(color: string, squares: Square[]) {
 
 function isKingInCheckmate(color: string, squares: Square[]) {
     if (!isKingInCheck(color, squares)) return false;
-
     const kingsSquare = squares.find((sq) => sq.piece && sq.piece.src[1] === "k" && sq.piece.color === color);
 
     const directions = [
@@ -129,7 +133,6 @@ function isKingInCheckmate(color: string, squares: Square[]) {
             }
         }
     }
-
     // Zasłanianie się figurą lub zbicie
     const enemyColor = color === "white" ? "black" : "white";
     const attackingSquares = squares.filter((sq) =>
@@ -144,7 +147,6 @@ function isKingInCheckmate(color: string, squares: Square[]) {
             lineOfAttackSquares.push(...getLineOfAttack(kingsSquare, attacker));
         }
     }
-
     for (const square of squares) {
         if (square.piece?.color === color) {
             // Sprawdzamy, czy figura może zablokować
@@ -162,7 +164,7 @@ function isKingInCheckmate(color: string, squares: Square[]) {
                     timeLeft: 0,
                 }
 
-                if (checkIfPlayersMoveIsCorrect(move, squares)) { //square, target
+                if (checkIfPlayersMoveIsCorrect(move, squares)) {
                     const simulatedSquares = simulateMove(move, squares);
 
                     if (!isKingInCheck(color, simulatedSquares)) {
@@ -185,7 +187,7 @@ function getLineOfAttack(kingSquare: Square, attackerSquare: Square) {
     let currentColumn = kingSquare.column + deltaColumn;
 
     while (
-        currentRow !== attackerSquare.row ||
+        currentRow !== attackerSquare.row &&
         currentColumn !== attackerSquare.column
     ) {
         lineOfAttack.push({ row: currentRow, column: currentColumn });
@@ -438,4 +440,4 @@ function checkIfEnemiesKingIsInRange(move: Move, squares: Square[]){
     return false;
 }
 
-export { checkIfPlayersMoveIsCorrect, checkIfPlayerWillBeCheckmated, checkIfPlayerWillBeInPat };
+export { checkIfPlayersMoveIsCorrect, checkIfPlayerWillBeCheckmated, checkIfPlayerWillBeInPat, checkIfPlayerWillBeInCheck};

@@ -1,5 +1,4 @@
 import React from "react";
-import "./ClockIcon.css"
 
 function ClockIcon() {
     return (
@@ -11,7 +10,7 @@ function ClockIcon() {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="clock-icon"
+        style={{color: "black"}}
         width="40"
         height="40"
       >

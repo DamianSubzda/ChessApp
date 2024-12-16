@@ -88,7 +88,7 @@ namespace ChessApp.Server.Hubs
         {
             if (move.TimeLeft <= 0)
             {
-                await Clients.OthersInGroup(gameId).SendAsync("PlayerLost");
+                await TimeRunOut(gameId);
             }
             else
             {
@@ -99,7 +99,7 @@ namespace ChessApp.Server.Hubs
 
         public async Task TimeRunOut(string gameId)
         {
-            await Clients.OthersInGroup(gameId).SendAsync("PlayerLost");
+            await Clients.OthersInGroup(gameId).SendAsync("TimeRunOut");
             _gameService.SetGameStatusToEnded(gameId);
         }
 
@@ -115,5 +115,26 @@ namespace ChessApp.Server.Hubs
             _gameService.SetGameStatusToEnded(gameId);
         }
 
+        public async Task SendDrawRequest(string gameId)
+        {
+            await Clients.OthersInGroup(gameId).SendAsync("DrawRequest");
+        }
+
+        public async Task AcceptDrawRequest(string gameId)
+        {
+            await Clients.OthersInGroup(gameId).SendAsync("AcceptDraw");
+            _gameService.SetGameStatusToEnded(gameId);
+        }
+
+        public async Task DeclineDrawRequest(string gameId)
+        {
+            await Clients.OthersInGroup(gameId).SendAsync("DeclineDraw");
+        }
+
+        public async Task ResignGame(string gameId)
+        {
+            await Clients.OthersInGroup(gameId).SendAsync("Resign");
+            _gameService.SetGameStatusToEnded(gameId);
+        }
     }
 }

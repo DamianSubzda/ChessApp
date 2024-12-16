@@ -1,0 +1,43 @@
+.draw-popup {
+    position: absolute;
+    bottom: 100%; /* Wyświetla popup nad guzikami */
+    left: 50%;
+    transform: translate(-50%, -10px); /* Centralizacja popupu */
+    z-index: 1000;
+    background-color: white;
+    border: 2px solid #ccc;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    border-radius: 8px;
+    width: 250px;
+
+    &__buttons {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 15px;
+    }
+
+    &__button {
+        padding: 10px 20px;
+        border: none;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: bold;
+
+        &--accept {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        &--decline {
+            background-color: #f44336;
+            color: white;
+        }
+
+        &:hover {
+            opacity: 0.9;
+        }
+    }
+}

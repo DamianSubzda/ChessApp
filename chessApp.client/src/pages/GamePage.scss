@@ -8,19 +8,6 @@
     gap: 10px;
     justify-content: center;
     align-items: center;
-
-    .result-notification{
-        z-index: 999;
-        background-color: rgb(197, 221, 181);
-        padding: 1rem;
-        position: absolute;
-        border: 1px solid;
-        border-radius: 20px;
-        box-shadow: 5px 5px 10px 5px rgba(71, 54, 54, 0.726);
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
 }
 
 .game-page__left {
@@ -37,8 +24,8 @@
 .game-page__right {
     height: calc($square-size * 8);
     align-items: baseline;
-    justify-content: center;
-    display: flex;
+    display: grid;
+    grid-template-rows: 15fr 1fr;
     width: 90%;
 }
 
@@ -64,4 +51,8 @@
     align-items: center;
     justify-content: center;
     display: flex;
+}
+
+.game-page__right__buttons {
+    position: relative;
 }

@@ -39,7 +39,7 @@ body.grabbing, body.grabbing * {
     position: absolute;
     width: calc($square-size * 0.95);
     height: calc($square-size * 0.95);;
-    z-index: 999;
+    z-index: 99;
 
     img {
         transform-origin: center;
