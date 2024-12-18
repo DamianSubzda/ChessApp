@@ -10,8 +10,8 @@ import {
   useCheckMat,
   useCheck,
 } from "../hooks/useCheckMove.tsx";
-import { createGameConnection } from "../hubs/gameHubConnection.js";
-import { HubConnection } from "@microsoft/signalr";
+import GameService from "../services/GameService.ts";
+
 import Chessboard from "../components/board/Chessboard.tsx";
 import Timer from "../components/timer/Timer.tsx";
 import MovesHistory from "../components/moves-history/MovesHistory.tsx";
@@ -29,10 +29,10 @@ import ResignIcon from "../components/icons/ResignIcon.tsx";
 import DrawRequestIcon from "../components/icons/DrawRequestIcon.tsx";
 import TakenPieces from "../components/taken-pieces/TakenPieces.tsx";
 import DrawRequestPopup from "../components/drawRequestPopup/DrawRequestPopup .tsx";
+import { Player } from "../types/Player.ts";
 
 function GamePage() {
   const { gameId } = useParams();
-  const connectionRef = useRef<HubConnection | null>(null);
   const squares = useSelector((state: AppState) => state.board.squares);
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -60,15 +60,14 @@ function GamePage() {
   const drawRequestButtonRef = useRef<HTMLButtonElement | null>(null);
   const [canPlayerAcceptDraw, setIfPlayerCanAcceptDraw] = useState(false);
 
-  const handlePlayerJoin = (data) => {
-    const isWhite =
-      connectionRef.current?.connectionId === data.player1.connectionId
-        ? data.player1.isWhite
-        : data.player2.isWhite;
-    isWhitePOVRef.current = isWhite;
-    setIfPlayerCanMove(isWhite);
+  const handlePlayerJoin = (playerData: Player) => {
+    isWhitePOVRef.current = playerData.isWhite;
     setUserRole("player");
   };
+
+  const handleGameStart = () => {
+    setIfPlayerCanMove(isWhitePOVRef.current);
+  }
 
   const handleGameFull = () => {
     setUserRole("observer");
@@ -89,7 +88,7 @@ function GamePage() {
     setIsTimerRunning(true);
   };
 
-  const handleMakeMove = (square: Square, target: any) => {
+  const handleMakeMove = async (square: Square, target: any) => {
     if (userRole !== "player" || !isPlayerMove) return;
     if (square.piece?.color !== (isWhitePOVRef.current ? "white" : "black"))
       return;
@@ -111,12 +110,17 @@ function GamePage() {
     const isCheckmate = checkmate(move);
     const isPat = checkPat(move);
 
-    console.log(isCheck, isCheckmate, isPat);
-
-    const notation = generateChessNotation(move, squares, isCheck, isCheckmate, isPat);
+    const notation = generateChessNotation(
+      move,
+      squares,
+      isCheck,
+      isCheckmate,
+      isPat
+    );
     move.moveNotation = notation;
-    connectionRef.current?.invoke("MakeMove", gameId, move);
-
+    
+    GameService.makeMove(move);
+    
     dispatch(
       addMove({ notation, color: isWhitePOVRef.current ? "white" : "black" })
     );
@@ -127,7 +131,7 @@ function GamePage() {
     setIfPlayerCanMove(false);
 
     if (isCheckmate) {
-      connectionRef.current?.invoke("PlayerCheckmated", gameId);
+      GameService.checkmate();
       setGameResult("You won!");
       setEndGameReason("Checkmate!");
       handleGameEnd();
@@ -135,13 +139,13 @@ function GamePage() {
     }
 
     if (isPat) {
-      connectionRef.current?.invoke("PlayerInPat", gameId);
+      GameService.pat();
+      
       setGameResult("Draw!");
       setEndGameReason("Enemy has no legal moves.");
       handleGameEnd();
       return;
     }
-
   };
 
   const handleTimeChange = (newTime: number) => {
@@ -153,12 +157,11 @@ function GamePage() {
     setEnemyTime(newTime);
   };
 
-  const handleTimeRunOut = () => {
-    handleGameEnd();
-    connectionRef.current?.invoke("TimeRunOut", gameId);
-
+  const handleTimeRunOut = async () => {
+    handleGameEnd();  
     setGameResult("You lose.");
     setEndGameReason("Run out of time.");
+    GameService.timeRunOut();
   };
 
   const handleEnemyTimeRunOut = () => {
@@ -185,31 +188,32 @@ function GamePage() {
     setEndGameReason(`Enemy player left the game!`);
   };
 
-  const onClickResignGame = () => {
+  const onClickResignGame = async () => {
     handleGameEnd();
     setGameResult("You lose");
     setEndGameReason("Lose by resign");
-    connectionRef.current?.invoke("ResignGame", gameId);
+    
+    GameService.resignGame();
   };
 
-  const onClickSendDrawRequest = () => {
+  const onClickSendDrawRequest = async () => {
     if (drawRequestButtonRef.current) {
       drawRequestButtonRef.current.disabled = true;
     }
-
-    connectionRef.current?.invoke("SendDrawRequest", gameId);
+    GameService.sendDrawRequest();
   };
 
   const onClickAcceptDrawRequest = () => {
     handleGameEnd();
     setGameResult("Draw!");
     setEndGameReason("Players aggred to a draw!");
-    connectionRef.current?.invoke("AcceptDrawRequest", gameId);
+    
+    GameService.acceptDraw();
   };
 
-  const onClickDeclineDrawRequest = () => {
+  const onClickDeclineDrawRequest = async () => {
     setIfPlayerCanAcceptDraw(false);
-    connectionRef.current?.invoke("DeclineDrawRequest", gameId);
+    GameService.declineDraw();
   };
 
   const handleEnemySendDrawRequest = () => {
@@ -257,14 +261,6 @@ function GamePage() {
       .catch(() => setIsValidGameId(false));
   }, [gameId]);
 
-  //Redirect jeśli gra nie istnieje
-  useEffect(() => {
-    if (isValidGameId === false) {
-      navigate("/lobby");
-    }
-  }, [isValidGameId]);
-
-  //Obsługa wyjścia z gry.
   useEffect(() => {
     if (isValidGameId !== true) return;
 
@@ -283,35 +279,28 @@ function GamePage() {
   }, [isValidGameId, gameId]);
 
   useEffect(() => {
-    if (isValidGameId !== true) return;
+    if (isValidGameId === false || gameId === undefined) {
+      navigate("/lobby");
+      return;
+    } else if (isValidGameId !== true) return;
 
     dispatch(clearMoves());
 
-    const connection = createGameConnection();
-    connectionRef.current = connection;
+    const playerName = localStorage.getItem("PlayerName") ?? "";
+    GameService.joinGame(gameId, playerName);
 
-    connection.on("GameFull", handleGameFull);
-    connection.on("PlayerJoined", handlePlayerJoin);
-    connection.on("MadeMove", handleOpponentMove);
-    connection.on("PlayerLeft", handleEnemyLeft);
-    connection.on("TimeRunOut", handleEnemyTimeRunOut);
-    connection.on("Checkmate", handleLostByCheckmate);
-    connection.on("Pat", handleDrawByPat);
-    connection.on("DrawRequest", handleEnemySendDrawRequest);
-    connection.on("AcceptDraw", handleAcceptedDraw);
-    connection.on("DeclineDraw", handleDeclinedDraw);
-    connection.on("Resign", handleEnemyResignGame);
-
-    connection
-      .start()
-      .then(() => {
-        console.log("Connected to game!: ", gameId);
-        const playerName = localStorage.getItem("PlayerName");
-        connection.invoke("JoinGameRoom", gameId, playerName);
-      })
-      .catch(() => {
-        navigate("/lobby");
-      });
+    GameService.onGameStarted(handleGameStart);
+    GameService.onGameFull(handleGameFull);
+    GameService.onPlayerJoined(handlePlayerJoin);
+    GameService.onOpponentMoveMade(handleOpponentMove);
+    GameService.onPlayerLeft(handleEnemyLeft);
+    GameService.onTimeRunOut(handleEnemyTimeRunOut);
+    GameService.onCheckmate(handleLostByCheckmate)
+    GameService.onPat(handleDrawByPat);
+    GameService.onDrawRequest(handleEnemySendDrawRequest);
+    GameService.onAcceptDraw(handleAcceptedDraw);
+    GameService.onDeclineDraw(handleDeclinedDraw);
+    GameService.onResign(handleEnemyResignGame);
 
     return () => {
       if (gameId) {
@@ -319,9 +308,10 @@ function GamePage() {
         const blob = new Blob([payload], { type: "application/json" });
         navigator.sendBeacon(`${config.apiURL}abandon-game`, blob);
       }
-      connection.stop();
+      GameService.stopConnection();
     };
-  }, [isValidGameId]);
+  }, [isValidGameId, gameId]);
+
 
   if (isValidGameId === null) {
     return <p>Verifying game ID...</p>;

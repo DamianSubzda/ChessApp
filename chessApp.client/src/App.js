@@ -4,7 +4,7 @@ import GamePage from "./pages/GamePage.tsx"
 import PageNotFound from "./pages/PageNotFound"
 import LobbyPage from "./pages/LobbyPage"
 import HomePage from "./pages/HomePage";
-import CreateGame from "./pages/CreateGame";
+import CreateGame from "./pages/CreateGame.tsx";
 import NameFormPage from "./pages/NameFormPage";
 import Navbar from "./components/navbar/Navbar"
 import "./App.css"

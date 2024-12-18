@@ -26,7 +26,7 @@ namespace ChessApp.Server.Hubs
                 if (game.Player1 == null)
                 {
                     Random random = new();
-                    bool isPlayerWhite = random.Next(2) == 0;
+                    bool isPlayerWhite = random.Next(2) == 0; //To do sprawdzenia ponieważ często daje ten am kolor. Pseudolosowość nie działa tak jak powinna 
 
                     game.Player1 = new Player
                     {
@@ -35,6 +35,7 @@ namespace ChessApp.Server.Hubs
                         IsWhite = isPlayerWhite
                     };
                     await Groups.AddToGroupAsync(Context.ConnectionId, gameId);
+                    await Clients.Caller.SendAsync("PlayerJoined", game.Player1);
                 }
                 else if (game.Player2 == null)
                 {
@@ -46,7 +47,8 @@ namespace ChessApp.Server.Hubs
                     };
 
                     await Groups.AddToGroupAsync(Context.ConnectionId, gameId);
-                    await Clients.Group(gameId).SendAsync("PlayerJoined", game);
+                    await Clients.Caller.SendAsync("PlayerJoined", game.Player2);
+                    await Clients.Group(gameId).SendAsync("GameStarted");
                 }
                 else if (game.Player1.ConnectionId == Context.ConnectionId || game.Player2.ConnectionId == Context.ConnectionId)
                 {

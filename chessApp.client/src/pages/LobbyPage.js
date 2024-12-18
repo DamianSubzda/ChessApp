@@ -1,11 +1,10 @@
 import GameList from "./../components/lobby/GameList"
-import React, { useState, useRef, useEffect } from "react";
-import { createLobbyConnection } from "./../hubs/lobbyHubConnection";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import LobbyService from "../services/LobbyService.ts";
 
 function LobbyPage(){
     const [games, setGames] = useState([]);
-    const connectionRef = useRef(null);
     const navigate = useNavigate();
 
     const handleGameAdded = (newGame) => {
@@ -21,50 +20,41 @@ function LobbyPage(){
     };
 
     const handleJoinGame = (game) => {
-        const playerName = localStorage.getItem("PlayerName");
-        if (playerName){
-            connectionRef.current.invoke("JoinGame", game.gameId);
-        }else {
-            navigate("/player-name");
-        }
-        
+      const playerName = localStorage.getItem("PlayerName");
+      if (playerName){
+          LobbyService.joinGame(game.gameId);
+      }else {
+          navigate("/player-name");
+      }
     }
 
     const handleGameStart = (game) => {
         localStorage.setItem("Game", JSON.stringify(game));
-        connectionRef.current.stop();
         navigate(`/game/${game.gameId}`);
     }
 
     useEffect(() => {
-        const connection = createLobbyConnection();
 
-        connection.start()
-            .then(() => {
-                console.log("Connected to lobby!");
-                connection.invoke("GetCurrentWaitingGames");
-            })
-            .catch(() => { });
-        
-        connection.on("GameAdded", handleGameAdded);
-        connection.on("GameRemoved", handleGameRemoved);
-        connection.on("WaitingGames", handleWaitingGames);
-        connection.on("GameStarted", handleGameStart);
-        
-        connectionRef.current = connection;
+        const initializeConnection = async () => {
+            await LobbyService.startConnection();
+            LobbyService.onGameAdded(handleGameAdded);
+            LobbyService.onGameRemoved(handleGameRemoved);
+            LobbyService.onWaitingGames(handleWaitingGames);
+            LobbyService.onGameStarted(handleGameStart);
+
+            await LobbyService.waitingGames();
+        };
+    
+        initializeConnection();
         
         return () => {
-            if (connectionRef.current) {
-                connectionRef.current.stop()
-                    .then(() => console.log("Connection stopped"))
-                    .catch((err) => console.error("Error stopping connection:", err));
-            }
+          LobbyService.stopConnection();
         }
     }, [])
 
     return(
         <React.Fragment>
-            <GameList games={games} joinGame={handleJoinGame}/>
+          <GameList games={games} joinGame={handleJoinGame}/>
         </React.Fragment>
     );
 }
