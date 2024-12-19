@@ -1,5 +1,6 @@
 import { Move } from "../types/Move";
 import { Square } from "../types/Square";
+import { simulateSquaresAfterMove } from "../utils/simulateSquares.ts";
 
 function checkIfPlayersMoveIsCorrect(move: Move, squares: Square[]){
     if (move.columnFrom === move.columnTo && move.rowFrom === move.rowTo) return false; //Jeśli ruch jest na to samo pole.
@@ -8,7 +9,7 @@ function checkIfPlayersMoveIsCorrect(move: Move, squares: Square[]){
     
     if (canMove) {
         //Jeśli po ruchu nasz król jest w szachu to 'false';
-        const simulatedSquares = simulateMove(move, squares);
+        const simulatedSquares = simulateSquaresAfterMove(move, squares);
         if (isKingInCheck(move.piece.color, simulatedSquares)){
             canMove = false;
         }
@@ -20,33 +21,21 @@ function checkIfPlayersMoveIsCorrect(move: Move, squares: Square[]){
 
 function checkIfPlayerWillBeCheckmated(move: Move, squares: Square[]) {
     //Possition prediction.
-    const simulatedSquares = simulateMove(move, squares);
+    const simulatedSquares = simulateSquaresAfterMove(move, squares);
     const enemyColor = move.piece.color === "white" ? "black" : "white";
     return isKingInCheckmate(enemyColor, simulatedSquares);
 }
 
 function checkIfPlayerWillBeInCheck(move: Move, squares: Square[]) {
-    const simulatedSquares = simulateMove(move, squares);
+    const simulatedSquares = simulateSquaresAfterMove(move, squares);
     return isKingInCheck(move.piece.color=== "white" ? "black" : "white", simulatedSquares);
 }
 
 function checkIfPlayerWillBeInPat(move: Move, squares: Square[]) {
     //Possition prediction.
-    const simulatedSquares = simulateMove(move, squares);
+    const simulatedSquares = simulateSquaresAfterMove(move, squares);
     const enemyColor = move.piece.color === "white" ? "black" : "white";
     return isPlayerInPat(enemyColor, simulatedSquares);
-}
-
-function simulateMove(move: Move, squares: Square[]) {
-    return squares.map((sq) => {
-        if (sq.row === move.rowFrom && sq.column === move.columnFrom) {
-            return { ...sq, piece: null };
-        }
-        if (sq.row === move.rowTo && sq.column === move.columnTo) {
-            return { ...sq, piece: move.piece };
-        }
-        return sq;
-    });
 }
 
 function checkPieces(move: Move, squares: Square[]){
@@ -127,8 +116,7 @@ function isKingInCheckmate(color: string, squares: Square[]) {
         };
 
         if (move.rowTo >= 1 && move.rowTo <= 8 && move.columnTo >= 1 && move.columnTo <= 8) {
-            // const targetSquare = squares.find((sq) => sq.row === move.rowTo && sq.column === move.columnTo);
-            if (checkIfSquareIsClearFromAllyPieces(move, squares) && !isKingInCheck(color, simulateMove(move, squares))) {
+            if (checkIfSquareIsClearFromAllyPieces(move, squares) && !isKingInCheck(color, simulateSquaresAfterMove(move, squares))) {
                 return false;
             }
         }
@@ -165,7 +153,7 @@ function isKingInCheckmate(color: string, squares: Square[]) {
                 }
 
                 if (checkIfPlayersMoveIsCorrect(move, squares)) {
-                    const simulatedSquares = simulateMove(move, squares);
+                    const simulatedSquares = simulateSquaresAfterMove(move, squares);
 
                     if (!isKingInCheck(color, simulatedSquares)) {
                         return false;

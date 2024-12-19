@@ -1,1 +1,19 @@
+.taken-pieces-container {
+    display: flex;
+    flex-direction: column;
+    align-items: end;
 
+    .taken-pieces-group {
+        display: flex;
+        position: relative;
+        height: 40px;
+        width: calc(40px + (var(--max-count, 1) - 1) * 10px);
+
+        img {
+            position: absolute;
+            height: 40px;
+            width: 40px;
+            left: calc(var(--index, 0) * 10px);
+        }
+    }
+}

@@ -23,6 +23,7 @@ import type { Move } from "../types/Move.ts";
 import type { AppState } from "../store/store.ts";
 import { movePiece } from "../store/boardReducer.ts";
 import { addMove, clearMoves } from "../store/moveHistoryReducer.ts";
+import { addPiece, clearPieces } from "../store/takenPiecesReducer.ts";
 
 import { generateChessNotation } from "../utils/movesNotation.ts";
 import ResignIcon from "../components/icons/ResignIcon.tsx";
@@ -30,10 +31,13 @@ import DrawRequestIcon from "../components/icons/DrawRequestIcon.tsx";
 import TakenPieces from "../components/taken-pieces/TakenPieces.tsx";
 import DrawRequestPopup from "../components/drawRequestPopup/DrawRequestPopup .tsx";
 import { Player } from "../types/Player.ts";
+import { Piece } from "../types/Piece.ts";
 
 function GamePage() {
   const { gameId } = useParams();
   const squares = useSelector((state: AppState) => state.board.squares);
+  const squaresRef = useRef<Square[]>([]);
+  const takenPieces = useSelector((state: AppState) => state.takenPieces);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const checkMove = useCheckMove();
@@ -76,6 +80,13 @@ function GamePage() {
   const handleOpponentMove = (move: Move) => {
     setIsEnemyTimerRunning(false);
     setEnemyTime(move.timeLeft);
+
+    const currentSquares = [...squaresRef.current];
+    const piece: Piece | null = currentSquares.find(
+        (sq) => sq.column === move.columnTo && sq.row === move.rowTo
+    )?.piece ?? null;
+
+    dispatch(addPiece(piece));
     dispatch(
       addMove({
         notation: move.moveNotation,
@@ -104,8 +115,15 @@ function GamePage() {
     } as Move;
 
     if (!checkMove(move)) return;
-
+    
+    const currentSquares = [...squares];
+    const piece: Piece | null = currentSquares.find(
+      (sq) => sq.column === move.columnTo && sq.row === move.rowTo
+    )?.piece ?? null;
+    
+    dispatch(addPiece(piece));
     dispatch(movePiece(move));
+
     const isCheck = check(move);
     const isCheckmate = checkmate(move);
     const isPat = checkPat(move);
@@ -285,6 +303,7 @@ function GamePage() {
       return;
     } else if (isValidGameId !== true) return;
 
+    dispatch(clearPieces())
     dispatch(clearMoves());
 
     const playerName = localStorage.getItem("PlayerName") ?? "";
@@ -313,6 +332,10 @@ function GamePage() {
     };
   }, [isValidGameId, gameId]);
 
+  useEffect(() => {
+    squaresRef.current = squares;
+  }, [squares]);
+
 
   if (isValidGameId === null) {
     return <p>Verifying game ID...</p>;
@@ -327,7 +350,7 @@ function GamePage() {
       <Result result={gameResult} reason={endGameReason} />
       <div className="game-page__left">
         <div className="taken-pieces taken-pieces--enemy">
-          <TakenPieces pieces={[]} />
+          <TakenPieces groupedPieces={isWhitePOVRef.current ? takenPieces.whiteGroupedPieces : takenPieces.blackGroupedPieces} />
         </div>
         <Timer
           className="timer"
@@ -344,7 +367,7 @@ function GamePage() {
           isTimerRunning={isTimerRunning}
         />
         <div className="taken-pieces taken-pieces--player">
-          <TakenPieces pieces={[]} />
+          <TakenPieces groupedPieces={!isWhitePOVRef.current ? takenPieces.whiteGroupedPieces : takenPieces.blackGroupedPieces} />
         </div>
       </div>
 

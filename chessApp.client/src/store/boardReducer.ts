@@ -7,6 +7,9 @@ const boardSlice = createSlice({
     name: 'board',
     initialState: { squares: [] as Square[] },
     reducers: {
+        clearBoard(state){
+            state.squares = [];
+        },
         setupBoard(state) {
             state.squares = setupInitialBoard();
         },
@@ -38,7 +41,7 @@ const boardSlice = createSlice({
     }
 });
 
-export const { setupBoard, movePiece, reverseBoard } = boardSlice.actions;
+export const { setupBoard, movePiece, reverseBoard, clearBoard } = boardSlice.actions;
 export default boardSlice.reducer;
 
 function setupInitialBoard(): Square[] {
