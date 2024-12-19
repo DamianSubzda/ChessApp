@@ -1,14 +1,21 @@
 import "./MovesHistory.scss"
 import { useSelector } from "react-redux";
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { AppState } from "../../store/store";
 
 function MovesHistory() {
+    const tableContainerRef = useRef<HTMLDivElement | null>(null);
     const moves = useSelector((state: AppState) => state.movesHistory.moves);
+
+    useEffect(() => {
+        if (tableContainerRef.current) {
+            tableContainerRef.current.scrollTop = tableContainerRef.current.scrollHeight;
+        }
+    }, [moves]);
 
     return (
         <div className="moves-history-container">
-            <div className="table-container">
+            <div className="table-container" ref={tableContainerRef}>
                 <table className="table__element">
                     <thead>
                         <tr>
