@@ -189,6 +189,7 @@ function GamePage() {
   };
 
   const onClickResignGame = async () => {
+    if (gameResult !== null) return;
     handleGameEnd();
     setGameResult("You lose");
     setEndGameReason("Lose by resign");
@@ -197,6 +198,7 @@ function GamePage() {
   };
 
   const onClickSendDrawRequest = async () => {
+    if (gameResult !== null) return;
     if (drawRequestButtonRef.current) {
       drawRequestButtonRef.current.disabled = true;
     }
@@ -217,7 +219,6 @@ function GamePage() {
   };
 
   const handleEnemySendDrawRequest = () => {
-    //Zmiana flagi pokazującej okno do potwierdzenia remisu (do następnego ruchu).
     setIfPlayerCanAcceptDraw(true);
 
     if (drawRequestButtonRef.current) {
