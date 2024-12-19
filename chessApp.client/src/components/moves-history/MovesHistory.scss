@@ -8,22 +8,48 @@
     max-height: calc(5*$square-size);
     overflow-y: auto;
     scrollbar-width: none;
-    
+    border: 1px solid black;
+    border-radius: 10px;
 }
+
 .table__element{
     border-collapse: collapse;
-    table-layout: "fixed";
+    table-layout: fixed;
     width: 100%;
+    overflow: visible;
+}
+
+tr {
+    border-bottom: 1px solid black;
 }
 
 th, td {
-    border: 1px solid black;
     padding: 8px;
     text-align: center;
+    border: none;
+    border-right: 1px solid black;
 }
 
 th {
     position: sticky;
     top: 0;
     background-color: #f1f1f1;
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+th:first-child {
+    width: 5%;
+}
+
+th:last-child, td:last-child {
+    border-right: none;
+}
+
+tr:last-child {
+    border-bottom: none;
+}
+.no-moves {
+    text-align: center;
+    color: #999;
+    font-style: italic;
 }
