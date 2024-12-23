@@ -4,12 +4,8 @@ import config from "../config.json";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  useCheckMove,
-  useCheckPat,
-  useCheckMat,
-  useCheck,
-} from "../hooks/useCheckMove.tsx";
+import useMoveValidator from "../hooks/useMoveValidator.tsx"
+import useTimer from "../hooks/useTimer.tsx"
 import GameService from "../services/GameService.ts";
 
 import Chessboard from "../components/board/Chessboard.tsx";
@@ -40,23 +36,16 @@ function GamePage() {
   const takenPieces = useSelector((state: AppState) => state.takenPieces);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const checkMove = useCheckMove();
-  const checkPat = useCheckPat();
-  const checkmate = useCheckMat();
-  const check = useCheck();
+  const moveValidator = useMoveValidator();
 
   const [isValidGameId, setIsValidGameId] = useState<boolean | null>(null);
 
   const [userRole, setUserRole] = useState("observer");
   const isWhitePOVRef = useRef<boolean>(true);
   const [isPlayerMove, setIfPlayerCanMove] = useState<boolean>(false);
-
-  const [time, setTime] = useState(600);
-  const [enemyTime, setEnemyTime] = useState(600);
-  const timeRef = useRef(time);
-
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [isEnemyTimerRunning, setIsEnemyTimerRunning] = useState(false);
+  
+  const playerTimer = useTimer(600);
+  const enemyTimer = useTimer(600);
 
   const [gameResult, setGameResult] = useState<string | null>(null);
   const [endGameReason, setEndGameReason] = useState<string | null>(null);
@@ -77,28 +66,6 @@ function GamePage() {
     setUserRole("observer");
   };
 
-  const handleOpponentMove = (move: Move) => {
-    setIsEnemyTimerRunning(false);
-    setEnemyTime(move.timeLeft);
-
-    const currentSquares = [...squaresRef.current];
-    const piece: Piece | null = currentSquares.find(
-        (sq) => sq.column === move.columnTo && sq.row === move.rowTo
-    )?.piece ?? null;
-
-    dispatch(addPiece(piece));
-    dispatch(
-      addMove({
-        notation: move.moveNotation,
-        color: isWhitePOVRef.current ? "black" : "white",
-      })
-    );
-
-    dispatch(movePiece(move));
-    setIfPlayerCanMove(true);
-    setIsTimerRunning(true);
-  };
-
   const handleMakeMove = async (square: Square, target: any) => {
     if (userRole !== "player" || !isPlayerMove) return;
     if (square.piece?.color !== (isWhitePOVRef.current ? "white" : "black"))
@@ -110,11 +77,11 @@ function GamePage() {
       rowTo: target.row,
       columnTo: target.column,
       piece: square.piece,
-      timeLeft: timeRef.current,
+      timeLeft: playerTimer.timeRef.current,
       moveNotation: "",
     } as Move;
 
-    if (!checkMove(move)) return;
+    if (!moveValidator.isMoveCorrect(move)) return;
     
     const currentSquares = [...squares];
     const piece: Piece | null = currentSquares.find(
@@ -124,9 +91,9 @@ function GamePage() {
     dispatch(addPiece(piece));
     dispatch(movePiece(move));
 
-    const isCheck = check(move);
-    const isCheckmate = checkmate(move);
-    const isPat = checkPat(move);
+    const isCheck = moveValidator.isPlayerInCheck(move);
+    const isCheckmate = moveValidator.isPlayerInMat(move);
+    const isPat = moveValidator.isPlayerInPat(move);
 
     const notation = generateChessNotation(
       move,
@@ -144,8 +111,8 @@ function GamePage() {
     );
 
     setIfPlayerCanAcceptDraw(false);
-    setIsEnemyTimerRunning(true);
-    setIsTimerRunning(false);
+    enemyTimer.startTimer();
+    playerTimer.stopTimer();
     setIfPlayerCanMove(false);
 
     if (isCheckmate) {
@@ -166,13 +133,26 @@ function GamePage() {
     }
   };
 
-  const handleTimeChange = (newTime: number) => {
-    setTime(newTime);
-    timeRef.current = newTime;
-  };
+  const handleOpponentMove = (move: Move) => {
+    enemyTimer.stopTimer();
+    enemyTimer.handleTimeChange(move.timeLeft);
 
-  const handleEnemyTimeChange = (newTime: number) => {
-    setEnemyTime(newTime);
+    const currentSquares = [...squaresRef.current];
+    const piece: Piece | null = currentSquares.find(
+        (sq) => sq.column === move.columnTo && sq.row === move.rowTo
+    )?.piece ?? null;
+
+    dispatch(addPiece(piece));
+    dispatch(
+      addMove({
+        notation: move.moveNotation,
+        color: isWhitePOVRef.current ? "black" : "white",
+      })
+    );
+
+    dispatch(movePiece(move));
+    setIfPlayerCanMove(true);
+    playerTimer.startTimer();
   };
 
   const handleTimeRunOut = async () => {
@@ -262,8 +242,8 @@ function GamePage() {
 
   const handleGameEnd = () => {
     setIfPlayerCanAcceptDraw(false);
-    setIsTimerRunning(false);
-    setIsEnemyTimerRunning(false);
+    playerTimer.stopTimer();
+    enemyTimer.stopTimer();
     setIfPlayerCanMove(false);
   };
 
@@ -354,17 +334,17 @@ function GamePage() {
         </div>
         <Timer
           className="timer"
-          time={enemyTime}
+          time={enemyTimer.time}
           onTimeRunOut={handleEnemyTimeRunOut}
-          onTimeChange={handleEnemyTimeChange}
-          isTimerRunning={isEnemyTimerRunning}
+          onTimeChange={enemyTimer.handleTimeChange}
+          isTimerRunning={enemyTimer.isRunning}
         />
         <Timer
           className="timer"
-          time={time}
+          time={playerTimer.time}
           onTimeRunOut={handleTimeRunOut}
-          onTimeChange={handleTimeChange}
-          isTimerRunning={isTimerRunning}
+          onTimeChange={playerTimer.handleTimeChange}
+          isTimerRunning={playerTimer.isRunning}
         />
         <div className="taken-pieces taken-pieces--player">
           <TakenPieces groupedPieces={!isWhitePOVRef.current ? takenPieces.whiteGroupedPieces : takenPieces.blackGroupedPieces} />
