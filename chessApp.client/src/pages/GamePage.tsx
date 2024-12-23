@@ -6,6 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import useMoveValidator from "../hooks/useMoveValidator.tsx"
 import useTimer from "../hooks/useTimer.tsx"
+import useDrawRequest from "../hooks/useDrawRequest.tsx";
 import GameService from "../services/GameService.ts";
 
 import Chessboard from "../components/board/Chessboard.tsx";
@@ -36,22 +37,21 @@ function GamePage() {
   const takenPieces = useSelector((state: AppState) => state.takenPieces);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const [gameResult, setGameResult] = useState<string | null>(null);
+  const [endGameReason, setEndGameReason] = useState<string | null>(null);
+
+  const playerTimer = useTimer(600);
+  const enemyTimer = useTimer(600);
   const moveValidator = useMoveValidator();
+  const drawRequest = useDrawRequest(gameResult);
 
   const [isValidGameId, setIsValidGameId] = useState<boolean | null>(null);
 
   const [userRole, setUserRole] = useState("observer");
   const isWhitePOVRef = useRef<boolean>(true);
   const [isPlayerMove, setIfPlayerCanMove] = useState<boolean>(false);
-  
-  const playerTimer = useTimer(600);
-  const enemyTimer = useTimer(600);
 
-  const [gameResult, setGameResult] = useState<string | null>(null);
-  const [endGameReason, setEndGameReason] = useState<string | null>(null);
-
-  const drawRequestButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [canPlayerAcceptDraw, setIfPlayerCanAcceptDraw] = useState(false);
 
   const handlePlayerJoin = (playerData: Player) => {
     isWhitePOVRef.current = playerData.isWhite;
@@ -110,7 +110,7 @@ function GamePage() {
       addMove({ notation, color: isWhitePOVRef.current ? "white" : "black" })
     );
 
-    setIfPlayerCanAcceptDraw(false);
+    drawRequest.setCanAcceptDraw(false);
     enemyTimer.startTimer();
     playerTimer.stopTimer();
     setIfPlayerCanMove(false);
@@ -195,43 +195,17 @@ function GamePage() {
     GameService.resignGame();
   };
 
-  const onClickSendDrawRequest = async () => {
-    if (gameResult !== null) return;
-    if (drawRequestButtonRef.current) {
-      drawRequestButtonRef.current.disabled = true;
-    }
-    GameService.sendDrawRequest();
-  };
-
   const onClickAcceptDrawRequest = () => {
     handleGameEnd();
     setGameResult("Draw!");
     setEndGameReason("Players aggred to a draw!");
-    
-    GameService.acceptDraw();
-  };
-
-  const onClickDeclineDrawRequest = async () => {
-    setIfPlayerCanAcceptDraw(false);
-    GameService.declineDraw();
-  };
-
-  const handleEnemySendDrawRequest = () => {
-    setIfPlayerCanAcceptDraw(true);
-
-    if (drawRequestButtonRef.current) {
-      drawRequestButtonRef.current.disabled = false;
-    }
+    drawRequest.acceptDrawRequest();
   };
 
   const handleAcceptedDraw = () => {
     handleGameEnd();
     setGameResult("Draw!");
     setEndGameReason("Players aggred to a draw!");
-  };
-
-  const handleDeclinedDraw = () => {
-    //nothing to do.
   };
 
   const handleEnemyResignGame = () => {
@@ -241,7 +215,7 @@ function GamePage() {
   };
 
   const handleGameEnd = () => {
-    setIfPlayerCanAcceptDraw(false);
+    drawRequest.setCanAcceptDraw(false);
     playerTimer.stopTimer();
     enemyTimer.stopTimer();
     setIfPlayerCanMove(false);
@@ -297,9 +271,9 @@ function GamePage() {
     GameService.onTimeRunOut(handleEnemyTimeRunOut);
     GameService.onCheckmate(handleLostByCheckmate)
     GameService.onPat(handleDrawByPat);
-    GameService.onDrawRequest(handleEnemySendDrawRequest);
+    GameService.onDrawRequest(drawRequest.receivedDrawRequest);
     GameService.onAcceptDraw(handleAcceptedDraw);
-    GameService.onDeclineDraw(handleDeclinedDraw);
+    GameService.onDeclineDraw(() => { });
     GameService.onResign(handleEnemyResignGame);
 
     return () => {
@@ -358,16 +332,16 @@ function GamePage() {
       <div className="game-page__right">
         <MovesHistory />
         <div className="game-page__right__buttons">
-          {canPlayerAcceptDraw && (
+          {drawRequest.canAcceptDraw && (
             <DrawRequestPopup
               handleAcceptedDraw={onClickAcceptDrawRequest}
-              handleDeclinedDraw={onClickDeclineDrawRequest}
+              handleDeclinedDraw={drawRequest.declineDrawRequest}
             />
           )}
           <button onClick={onClickResignGame}>
             <ResignIcon size={32} />
           </button>
-          <button onClick={onClickSendDrawRequest} ref={drawRequestButtonRef}>
+          <button onClick={drawRequest.sendDrawRequest} ref={drawRequest.drawRequestButtonRef}>
             <DrawRequestIcon size={32} />
           </button>
         </div>
