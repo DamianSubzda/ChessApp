@@ -7,6 +7,8 @@ import { useDispatch, useSelector } from "react-redux";
 import useMoveValidator from "../hooks/useMoveValidator.tsx"
 import useTimer from "../hooks/useTimer.tsx"
 import useDrawRequest from "../hooks/useDrawRequest.tsx";
+import useGameValidator from "../hooks/useGameValidator.tsx";
+
 import GameService from "../services/GameService.ts";
 
 import Chessboard from "../components/board/Chessboard.tsx";
@@ -30,6 +32,7 @@ import DrawRequestPopup from "../components/drawRequestPopup/DrawRequestPopup .t
 import { Player } from "../types/Player.ts";
 import { Piece } from "../types/Piece.ts";
 
+
 function GamePage() {
   const { gameId } = useParams();
   const squares = useSelector((state: AppState) => state.board.squares);
@@ -45,8 +48,7 @@ function GamePage() {
   const enemyTimer = useTimer(600);
   const moveValidator = useMoveValidator();
   const drawRequest = useDrawRequest(gameResult);
-
-  const [isValidGameId, setIsValidGameId] = useState<boolean | null>(null);
+  const isValidGameId = useGameValidator(gameId);
 
   const [userRole, setUserRole] = useState("observer");
   const isWhitePOVRef = useRef<boolean>(true);
@@ -221,19 +223,6 @@ function GamePage() {
     setIfPlayerCanMove(false);
   };
 
-  //Pobranie informacji o istnieniu gry.
-  useEffect(() => {
-    fetch(`${config.apiURL}join-game`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(gameId),
-    })
-      .then((response) => {
-        setIsValidGameId(response.ok);
-      })
-      .catch(() => setIsValidGameId(false));
-  }, [gameId]);
-
   useEffect(() => {
     if (isValidGameId !== true) return;
 
@@ -291,14 +280,8 @@ function GamePage() {
   }, [squares]);
 
 
-  if (isValidGameId === null) {
-    return <p>Verifying game ID...</p>;
-  }
-
-  if (isValidGameId === false) {
-    return <p>Invalid game ID. Redirecting...</p>;
-  }
-
+  if (isValidGameId === null) return <p>Verifying game ID...</p>;
+  if (isValidGameId === false) return <p>Invalid game ID. Redirecting...</p>;
   return (
     <div className="game-page">
       <Result result={gameResult} reason={endGameReason} />
