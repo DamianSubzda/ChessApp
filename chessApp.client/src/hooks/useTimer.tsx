@@ -9,7 +9,7 @@ export default function useGameTimer(initialTime: number) {
     setTime(newTime);
     timeRef.current = newTime;
   };
-
+  
   const startTimer = () => setIsRunning(true);
   const stopTimer = () => setIsRunning(false);
 

@@ -2,9 +2,12 @@ import  { useSelector } from "react-redux"
 import { checkIfPlayersMoveIsCorrect, checkIfPlayerWillBeCheckmated, checkIfPlayerWillBeInPat, checkIfPlayerWillBeInCheck } from "../services/piecesMove.ts";
 import { AppState } from "../store/store.ts";
 import { Move } from "../types/Move.ts";
+import { useRef, useEffect } from "react";
+import { Square } from "../types/Square.ts";
 
 export default function useMoveValidator() {
     const squares = useSelector((state: AppState) => state.board.squares);
+    const squaresRef = useRef<Square[]>([]);
 
     const isMoveCorrect = (move: Move) => {
         return checkIfPlayersMoveIsCorrect(move, squares);
@@ -22,7 +25,13 @@ export default function useMoveValidator() {
         return checkIfPlayerWillBeCheckmated(move, squares);
     }
 
+    useEffect(() => {
+        squaresRef.current = squares;
+      }, [squares]);
+
     return {
+        squares,
+        squaresRef,
         isMoveCorrect,
         isPlayerInCheck,
         isPlayerInPat,

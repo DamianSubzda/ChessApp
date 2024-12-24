@@ -5,6 +5,10 @@ export default function useDrawRequest(gameResult: string | null) {
   const [canAcceptDraw, setCanAcceptDraw] = useState(false);
   const drawRequestButtonRef = useRef<HTMLButtonElement | null>(null);
   
+  const setButtonRef = (button: HTMLButtonElement | null) => {
+    drawRequestButtonRef.current = button;
+  };
+
   const sendDrawRequest = () => {
     if (gameResult !== null) return;
     if (drawRequestButtonRef.current) {
@@ -33,7 +37,7 @@ export default function useDrawRequest(gameResult: string | null) {
 
   return {
     canAcceptDraw,
-    drawRequestButtonRef,
+    setButtonRef,
     setCanAcceptDraw,
     receivedDrawRequest,
     sendDrawRequest,
