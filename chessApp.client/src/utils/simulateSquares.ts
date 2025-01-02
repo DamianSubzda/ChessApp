@@ -3,10 +3,10 @@ import { Square } from "../types/Square";
 
 function simulateSquaresAfterMove(move: Move, squares: Square[]) {
     return squares.map((sq) => {
-        if (sq.row === move.rowFrom && sq.column === move.columnFrom) {
+        if (sq.position.row === move.rowFrom && sq.position.column === move.columnFrom) {
             return { ...sq, piece: null };
         }
-        if (sq.row === move.rowTo && sq.column === move.columnTo) {
+        if (sq.position.row === move.rowTo && sq.position.column === move.columnTo) {
             return { ...sq, piece: move.piece };
         }
         return sq;

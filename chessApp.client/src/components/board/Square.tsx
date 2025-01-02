@@ -71,14 +71,14 @@ function Square({square, onDropPiece}: SquareProps) {
     return (
         <div
             className="square"
-            data-row={square.row}
-            data-column={square.column}
-            id={(square.row + square.column) % 2 === 1 ? "white" : "black"}
+            data-row={square.position.row}
+            data-column={square.position.column}
+            id={(square.position.row + square.position.column) % 2 === 1 ? "white" : "black"}
         >
             {square.piece?.src && (
                 <div
                     className="piece"
-                    id={`${square.row}${square.column}`}
+                    id={`${square.position.row}${square.position.column}`}
                     ref={pieceRef}
                     draggable={false}
                     onMouseDown={handleMouseDown}
@@ -86,11 +86,11 @@ function Square({square, onDropPiece}: SquareProps) {
                     <img src={`/assets/pieces/neo/${square.piece.src}`} alt="" />
                 </div>
             )}
-            {(square.column === 1 || square.row === 1) && (
+            {square.visibleNotation &&
                 <div className="notation">
-                    <p>{changeDigitsToLetter(square.column)}{square.row}</p>
+                    <p>{changeDigitsToLetter(square.position.column)}{square.position.row}</p>
                 </div>
-            )}
+            }
         </div>
     );
 }

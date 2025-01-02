@@ -1,8 +1,8 @@
+import { Coordinate } from './Coordinate';
 import { Piece } from './Piece';
 
 export type Square = {
-    row: number,
-    column: number,
-    position: string,
+    position: Coordinate,
+    visibleNotation: boolean,
     piece: Piece | null,
 }

@@ -46,8 +46,8 @@ export default function useGameController() {
       return;
 
     const move = {
-      rowFrom: square.row,
-      columnFrom: square.column,
+      rowFrom: square.position.row,
+      columnFrom: square.position.column,
       rowTo: target.row,
       columnTo: target.column,
       piece: square.piece,
@@ -60,7 +60,7 @@ export default function useGameController() {
     const currentSquares = [...moveValidator.squares];
     const piece: Piece | null =
       currentSquares.find(
-        (sq) => sq.column === move.columnTo && sq.row === move.rowTo
+        (sq) => sq.position.column === move.columnTo && sq.position.row === move.rowTo
       )?.piece ?? null;
 
     dispatch(addPiece(piece));
@@ -112,7 +112,7 @@ export default function useGameController() {
     const currentSquares = [...moveValidator.squaresRef.current];
     const piece: Piece | null =
       currentSquares.find(
-        (sq) => sq.column === move.columnTo && sq.row === move.rowTo
+        (sq) => sq.position.column === move.columnTo && sq.position.row === move.rowTo
       )?.piece ?? null;
 
     dispatch(addPiece(piece));

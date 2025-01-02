@@ -26,7 +26,7 @@ namespace ChessApp.Server.Hubs
                 if (game.Player1 == null)
                 {
                     Random random = new();
-                    bool isPlayerWhite = random.Next(2) == 0; //To do sprawdzenia ponieważ często daje ten am kolor. Pseudolosowość nie działa tak jak powinna 
+                    bool isPlayerWhite = random.Next(2) == 0;
 
                     game.Player1 = new Player
                     {

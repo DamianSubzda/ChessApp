@@ -1,5 +1,5 @@
-import { Move } from "../types/Move";
-import { Square } from "../types/Square";
+import { Move } from "../types/Move.ts";
+import { Square } from "../types/Square.ts";
 import { simulateSquaresAfterMove } from "../utils/simulateSquares.ts";
 
 function checkIfPlayersMoveIsCorrect(move: Move, squares: Square[]){
@@ -16,7 +16,6 @@ function checkIfPlayersMoveIsCorrect(move: Move, squares: Square[]){
     }
 
     return canMove;
-
 }
 
 function checkIfPlayerWillBeCheckmated(move: Move, squares: Square[]) {
@@ -28,7 +27,7 @@ function checkIfPlayerWillBeCheckmated(move: Move, squares: Square[]) {
 
 function checkIfPlayerWillBeInCheck(move: Move, squares: Square[]) {
     const simulatedSquares = simulateSquaresAfterMove(move, squares);
-    return isKingInCheck(move.piece.color=== "white" ? "black" : "white", simulatedSquares);
+    return isKingInCheck(move.piece.color === "white" ? "black" : "white", simulatedSquares);
 }
 
 function checkIfPlayerWillBeInPat(move: Move, squares: Square[]) {
@@ -42,18 +41,18 @@ function checkPieces(move: Move, squares: Square[]){
 
     if (!checkIfSquareIsClearFromAllyPieces(move, squares)) return false;
 
-    switch (move.piece.src[1]) {
-        case "p":
+    switch (move.piece.pieceType) {
+        case "pawn":
             return checkPawn(move, squares);
-        case "r":
+        case "rook":
             return checkRook(move, squares);
-        case "n":
+        case "knight":
             return checkKnight(move, squares);
-        case "b":
+        case "bishop":
             return checkBishop(move, squares);
-        case "q":
+        case "queen":
             return checkQueen(move, squares);
-        case "k":
+        case "king":
             return checkKing(move, squares);
         default:
             return false;
@@ -61,9 +60,9 @@ function checkPieces(move: Move, squares: Square[]){
 }
 
 function isKingInCheck(color: string, squares: Square[]) {
-    // Pole króla 
+    // Pole króla
     const kingsSquare = squares.find(
-        (sq) => sq.piece && sq.piece.src[1] === "k" && sq.piece.color === color
+        (sq) => sq.piece && sq.piece.pieceType === "king" && sq.piece.color === color
     );
 
     const enemyColor = color === "white" ? "black" : "white";
@@ -71,10 +70,10 @@ function isKingInCheck(color: string, squares: Square[]) {
     for (const square of squares) {
         if (square.piece?.color === enemyColor && kingsSquare) {
             const move = {
-                rowFrom: square.row,
-                columnFrom: square.column,
-                rowTo: kingsSquare.row,
-                columnTo: kingsSquare.column,
+                rowFrom: square.position.row,
+                columnFrom: square.position.column,
+                rowTo: kingsSquare.position.row,
+                columnTo: kingsSquare.position.column,
                 piece: square.piece,
                 timeLeft: 0,
             } as Move;
@@ -87,7 +86,7 @@ function isKingInCheck(color: string, squares: Square[]) {
 
 function isKingInCheckmate(color: string, squares: Square[]) {
     if (!isKingInCheck(color, squares)) return false;
-    const kingsSquare = squares.find((sq) => sq.piece && sq.piece.src[1] === "k" && sq.piece.color === color);
+    const kingsSquare = squares.find((sq) => sq.piece && sq.piece.pieceType === "king" && sq.piece.color === color);
 
     const directions = [
         { rowOffset: -1, colOffset: -1 }, // górny-lewy
@@ -106,10 +105,10 @@ function isKingInCheckmate(color: string, squares: Square[]) {
         if (kingsSquare.piece === null) return false;
 
         move = {
-            rowFrom: kingsSquare.row,
-            columnFrom: kingsSquare.column,
-            rowTo: kingsSquare.row + rowOffset,
-            columnTo: kingsSquare.column + colOffset,
+            rowFrom: kingsSquare.position.row,
+            columnFrom: kingsSquare.position.column,
+            rowTo: kingsSquare.position.row + rowOffset,
+            columnTo: kingsSquare.position.column + colOffset,
             piece: kingsSquare.piece,
             moveNotation: "",
             timeLeft: 0,
@@ -128,9 +127,9 @@ function isKingInCheckmate(color: string, squares: Square[]) {
         checkPieces(move, squares)
     );
 
-    const lineOfAttackSquares = [] as { row: number, column: number }[];
+    const lineOfAttackSquares = [] as Square[];
     for (const attacker of attackingSquares) {
-        if (attacker.piece?.src[1] === "q" || attacker.piece?.src[1] === "r" || attacker.piece?.src[1] === "b") {
+        if (attacker.piece?.pieceType === "queen" || attacker.piece?.pieceType === "rook" || attacker.piece?.pieceType === "bishop") {
             if (kingsSquare === undefined) return false;
             lineOfAttackSquares.push(...getLineOfAttack(kingsSquare, attacker));
         }
@@ -143,10 +142,10 @@ function isKingInCheckmate(color: string, squares: Square[]) {
                 if (kingsSquare.piece === null) return false;
                 
                 move = {
-                    rowFrom: square.row,
-                    columnFrom: square.column,
-                    rowTo: target.row,
-                    columnTo: target.column,
+                    rowFrom: square.position.row,
+                    columnFrom: square.position.column,
+                    rowTo: target.position.row,
+                    columnTo: target.position.column,
                     piece: square.piece,
                     moveNotation: "",
                     timeLeft: 0,
@@ -167,18 +166,18 @@ function isKingInCheckmate(color: string, squares: Square[]) {
 }
 
 function getLineOfAttack(kingSquare: Square, attackerSquare: Square) {
-    const lineOfAttack = [] as { row: number, column: number }[];
-    const deltaRow = Math.sign(attackerSquare.row - kingSquare.row);
-    const deltaColumn = Math.sign(attackerSquare.column - kingSquare.column);
+    const lineOfAttack = [] as Square[];
+    const deltaRow = Math.sign(attackerSquare.position.row - kingSquare.position.row);
+    const deltaColumn = Math.sign(attackerSquare.position.column - kingSquare.position.column);
 
-    let currentRow = kingSquare.row + deltaRow;
-    let currentColumn = kingSquare.column + deltaColumn;
+    let currentRow = kingSquare.position.row + deltaRow;
+    let currentColumn = kingSquare.position.column + deltaColumn;
 
     while (
-        currentRow !== attackerSquare.row &&
-        currentColumn !== attackerSquare.column
+        currentRow !== attackerSquare.position.row &&
+        currentColumn !== attackerSquare.position.column
     ) {
-        lineOfAttack.push({ row: currentRow, column: currentColumn });
+        lineOfAttack.push({ position: { row: currentRow, column: currentColumn }} as Square);
         currentRow += deltaRow;
         currentColumn += deltaColumn;
     }
@@ -194,8 +193,8 @@ function isPlayerInPat(color: string, squares: Square[]) {
             for (let row = 1; row <= 8; row++) {
                 for (let column = 1; column <= 8; column++) {
                     const move = {
-                        rowFrom: square.row,
-                        columnFrom: square.column,
+                        rowFrom: square.position.row,
+                        columnFrom: square.position.column,
                         rowTo: row,
                         columnTo: column,
                         piece: square.piece,
@@ -214,7 +213,7 @@ function isPlayerInPat(color: string, squares: Square[]) {
 
 function checkIfSquareIsClearFromAllyPieces(move: Move, squares: Square[]) { 
     const targetSquare = squares.find(
-        (sq) => sq.row === move.rowTo && sq.column === move.columnTo
+        (sq) => sq.position.row === move.rowTo && sq.position.column === move.columnTo
     );
 
     if (targetSquare && targetSquare.piece && targetSquare.piece.color === move.piece.color) {
@@ -273,21 +272,21 @@ function checkPawnCollision(move: Move, squares: Square[]){
     if (Math.abs(move.rowTo - move.rowFrom) > 1) {
         if (move.rowTo > move.rowFrom){
             //White
-            if (squares.find((sq) => sq.row === move.rowTo - 1 && sq.column === move.columnTo)?.piece !== null){//-1 ponieważ to pole które pion by 'przeskoczył'
+            if (squares.find((sq) => sq.position.row === move.rowTo - 1 && sq.position.column === move.columnTo)?.piece !== null){//-1 ponieważ to pole które pion by 'przeskoczył'
                 return false;
             }
         }else{
             //Black
-            if (squares.find((sq) => sq.row === move.rowTo + 1 && sq.column === move.columnTo)?.piece !== null){//+1 ponieważ to pole które pion by 'przeskoczył'
+            if (squares.find((sq) => sq.position.row === move.rowTo + 1 && sq.position.column === move.columnTo)?.piece !== null){//+1 ponieważ to pole które pion by 'przeskoczył'
                 return false;
             }
         }
     }
-    return squares.find((sq) => sq.row === move.rowTo && sq.column === move.columnTo)?.piece === null;
+    return squares.find((sq) => sq.position.row === move.rowTo && sq.position.column === move.columnTo)?.piece === null;
 }
 
 function checkIfPawnCanTake(move: Move, squares: Square[]){
-    if (squares.find((sq) => sq.row === move.rowTo && sq.column === move.columnTo)?.piece !== null){
+    if (squares.find((sq) => sq.position.row === move.rowTo && sq.position.column === move.columnTo)?.piece !== null){
         return true;
     }
     return false;
@@ -310,7 +309,7 @@ function checkRookCollision(move: Move, squares: Square[]){
     let currentColumn = move.columnFrom + deltaColumn;
 
     while (currentRow !== move.rowTo || currentColumn !== move.columnTo) {
-        const square = squares.find(sq => sq.row === currentRow && sq.column === currentColumn);
+        const square = squares.find(sq => sq.position.row === currentRow && sq.position.column === currentColumn);
         if (square?.piece !== null) {
             return true;
         }
@@ -353,7 +352,7 @@ function checkBishopCollision(move: Move, squares: Square[]){
     let currentColumn = move.columnFrom + deltaColumn;
 
     while (currentRow !== move.rowTo && currentColumn !== move.columnTo) {
-        const square = squares.find((sq) => sq.row === currentRow && sq.column === currentColumn && sq.piece !== null);
+        const square = squares.find((sq) => sq.position.row === currentRow && sq.position.column === currentColumn && sq.piece !== null);
         if (square) {
             return true;
         }
@@ -383,7 +382,7 @@ function checkQueenCollision(move: Move, squares: Square[]){
     let currentColumn = move.columnFrom + deltaColumn;
 
     while (currentRow !== move.rowTo || currentColumn !== move.columnTo) {
-        if (squares.find((sq) => sq.row === currentRow && sq.column === currentColumn && sq.piece !== null)) {
+        if (squares.find((sq) => sq.position.row === currentRow && sq.position.column === currentColumn && sq.piece !== null)) {
             return true;
         }
         currentRow += deltaRow;
@@ -395,7 +394,14 @@ function checkQueenCollision(move: Move, squares: Square[]){
 
 function checkKing(move: Move, squares: Square[]){
     if (Math.abs(move.rowTo - move.rowFrom) > 1) return false;
-    if (Math.abs(move.columnTo - move.columnFrom) > 1) return false;
+    if (Math.abs(move.columnTo - move.columnFrom) > 1){
+        //Roszada to do
+        if (Math.abs(move.rowTo - move.rowFrom) > 0) return false;
+        if (Math.abs(move.columnTo - move.columnFrom) !== 2) return false;
+        
+        
+        return false;
+    } 
     if (checkIfEnemiesKingIsInRange(move, squares)) return false; //Króle nie mogą stać obok siebie!
 
     return true;
@@ -418,7 +424,7 @@ function checkIfEnemiesKingIsInRange(move: Move, squares: Square[]){
         const targetCol = move.columnTo + colOffset;
 
         const square = squares.find(
-            (sq) => sq.row === targetRow && sq.column === targetCol && sq.piece && sq.piece.src[1] === "k" && sq.piece.color !== move.piece.color
+            (sq) => sq.position.row === targetRow && sq.position.column === targetCol && sq.piece && sq.piece.pieceType === "king" && sq.piece.color !== move.piece.color
         );
         if (square) {
             return true;

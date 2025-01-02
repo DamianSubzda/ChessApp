@@ -2,7 +2,8 @@
 {
     public class Piece
     {
-        public string? Color { get; set; }
-        public string? Src { get; set; }
+        public required string PieceType {  get; set; }
+        public required string Color { get; set; }
+        public required string Src { get; set; }
     }
 }
