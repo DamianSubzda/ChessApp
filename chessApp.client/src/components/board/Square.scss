@@ -16,6 +16,7 @@ body.grabbing, body.grabbing * {
         font-size: small;
         padding: 0;
         margin: 1px;
+        user-select: none;
     }
 }
 
@@ -46,6 +47,7 @@ body.grabbing, body.grabbing * {
         width: inherit;
         height: inherit;
         cursor: grab;
+        user-select: none;
     }
 
     &.dragging {

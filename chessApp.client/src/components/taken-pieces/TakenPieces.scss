@@ -10,6 +10,7 @@
         width: calc(40px + (var(--max-count, 1) - 1) * 10px);
 
         img {
+            user-select: none;
             position: absolute;
             height: 40px;
             width: 40px;
