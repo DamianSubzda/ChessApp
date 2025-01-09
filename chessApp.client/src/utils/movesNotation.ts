@@ -10,21 +10,21 @@ export function generateChessNotation(
   isPat: boolean
 ): string {
   const pieceSymbol = getPieceSymbol(move.piece.src);
-  const targetRow = `${move.rowTo}`;
-  const targetColumn = `${changeDigitsToLetter(move.columnTo).toLowerCase()}`;
+  const targetRow = `${move.to.row}`;
+  const targetColumn = `${changeDigitsToLetter(move.to.column).toLowerCase()}`;
   const targetSquare = targetColumn + targetRow;
   const capture = squares.find(
     (square) =>
-      square.row === move.rowTo &&
-      square.column === move.columnTo &&
+      square.position.row === move.to.row &&
+      square.position.column === move.to.column &&
       square.piece !== null
   );
   const captureSymbol = capture ? "x" : "";
-  const fromColumn = `${changeDigitsToLetter(move.columnFrom)}`;
+  const fromColumn = `${changeDigitsToLetter(move.from.column)}`;
 
   // Specjalne przypadki
-  if (pieceSymbol === "K" && Math.abs(move.columnFrom - move.columnTo) > 1) {
-    return move.columnTo === 7 ? "O-O" : "O-O-O";
+  if (pieceSymbol === "K" && Math.abs(move.from.column - move.to.column) > 1) {
+    return move.to.column === 7 ? "O-O" : "O-O-O";
   }
 
   return `${pieceSymbol}${

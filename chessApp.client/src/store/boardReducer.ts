@@ -20,23 +20,27 @@ const boardSlice = createSlice({
         movePiece(state, action: PayloadAction<Move>) {
             const move = action.payload;
             //Promocja
-            if (move.piece.src === 'wp.png' && move.rowTo === 8) {
-                move.piece.src = 'wq.png';
+      if (move.piece.src === "wp.png" && move.to.row === 8) {
+        move.piece.src = "wq.png";
                 move.piece.pieceType = "queen";
-            } else if (move.piece.src === 'bp.png' && move.rowTo === 1) {
-                move.piece.src = 'bq.png';
+      } else if (move.piece.src === "bp.png" && move.to.row === 1) {
+        move.piece.src = "bq.png";
                 move.piece.pieceType = "queen";
             }
         
             state.squares = state.squares.map((square) => {
                 //Dodanie figury
-                if (square.position.row === move.rowTo && square.position.column === move.columnTo) {
-                    console.log("moved piece here: ", square.position.row, square.position.column);
-                    console.log(move.piece);
+        if (
+          square.position.row === move.to.row &&
+          square.position.column === move.to.column
+        ) {
                     return { ...square, piece: move.piece };
                 }
                 //Usunięcie figury
-                if (square.position.row === move.rowFrom && square.position.column === move.columnFrom) {
+        if (
+          square.position.row === move.from.row &&
+          square.position.column === move.from.column
+        ) {
                     return { ...square, piece: null };
                 }
                 

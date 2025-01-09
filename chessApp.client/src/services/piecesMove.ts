@@ -1,9 +1,10 @@
+import { Coordinate } from "../types/Coordinate.ts";
 import { Move } from "../types/Move.ts";
 import { Square } from "../types/Square.ts";
 import { simulateSquaresAfterMove } from "../utils/simulateSquares.ts";
 
 function checkIfPlayersMoveIsCorrect(move: Move, squares: Square[]){
-    if (move.columnFrom === move.columnTo && move.rowFrom === move.rowTo) return false; //Jeśli ruch jest na to samo pole.
+    if (move.from.column === move.to.column && move.from.row === move.to.row) return false; //Jeśli ruch jest na to samo pole.
 
     let canMove =  checkPieces(move, squares); 
     
@@ -70,12 +71,9 @@ function isKingInCheck(color: string, squares: Square[]) {
     for (const square of squares) {
         if (square.piece?.color === enemyColor && kingsSquare) {
             const move = {
-                rowFrom: square.position.row,
-                columnFrom: square.position.column,
-                rowTo: kingsSquare.position.row,
-                columnTo: kingsSquare.position.column,
+                from: { row: square.position.row, column: square.position.column} as Coordinate,
+                to: { row: kingsSquare.position.row, column: kingsSquare.position.column} as Coordinate,
                 piece: square.piece,
-                timeLeft: 0,
             } as Move;
             const isMovePossible = checkPieces(move, squares);
             if (isMovePossible) return true;
@@ -105,28 +103,36 @@ function isKingInCheckmate(color: string, squares: Square[]) {
         if (kingsSquare.piece === null) return false;
 
         move = {
-            rowFrom: kingsSquare.position.row,
-            columnFrom: kingsSquare.position.column,
-            rowTo: kingsSquare.position.row + rowOffset,
-            columnTo: kingsSquare.position.column + colOffset,
+            from: { row: kingsSquare.position.row, column: kingsSquare.position.column} as Coordinate,
+            to: { row: kingsSquare.position.row + rowOffset, column: kingsSquare.position.column + colOffset} as Coordinate,
             piece: kingsSquare.piece,
-            moveNotation: "",
-            timeLeft: 0,
+            notation: "",
+            takenPiece: null
         };
 
-        if (move.rowTo >= 1 && move.rowTo <= 8 && move.columnTo >= 1 && move.columnTo <= 8) {
+        if (move.to.row >= 1 && move.to.row <= 8 && move.to.column >= 1 && move.to.column <= 8) {
             if (checkIfSquareIsClearFromAllyPieces(move, squares) && !isKingInCheck(color, simulateSquaresAfterMove(move, squares))) {
                 return false;
             }
         }
     }
-    // Zasłanianie się figurą lub zbicie
-    const enemyColor = color === "white" ? "black" : "white";
-    const attackingSquares = squares.filter((sq) =>
-        sq.piece?.color === enemyColor &&
-        checkPieces(move, squares)
-    );
 
+    // Zasłanianie się figurą lub zbicie
+    const attackedPieceColor = color === "white" ? "black" : "white";
+    const attackingSquares = squares.filter((sq) => {
+        if (sq.piece?.color === attackedPieceColor && kingsSquare) {
+            const attackMove: Move = {
+                from: { row: sq.position.row, column: sq.position.column } as Coordinate,
+                to: { row: kingsSquare.position.row, column: kingsSquare.position.column } as Coordinate,
+                piece: sq.piece,
+                notation: "",
+                takenPiece: null,
+            };
+            return checkPieces(attackMove, squares);
+        }
+        return false;
+    });
+    
     const lineOfAttackSquares = [] as Square[];
     for (const attacker of attackingSquares) {
         if (attacker.piece?.pieceType === "queen" || attacker.piece?.pieceType === "rook" || attacker.piece?.pieceType === "bishop") {
@@ -134,6 +140,7 @@ function isKingInCheckmate(color: string, squares: Square[]) {
             lineOfAttackSquares.push(...getLineOfAttack(kingsSquare, attacker));
         }
     }
+
     for (const square of squares) {
         if (square.piece?.color === color) {
             // Sprawdzamy, czy figura może zablokować
@@ -142,18 +149,15 @@ function isKingInCheckmate(color: string, squares: Square[]) {
                 if (kingsSquare.piece === null) return false;
                 
                 move = {
-                    rowFrom: square.position.row,
-                    columnFrom: square.position.column,
-                    rowTo: target.position.row,
-                    columnTo: target.position.column,
+                    from: { row: square.position.row, column: square.position.column} as Coordinate,
+                    to: { row: target.position.row, column: target.position.column} as Coordinate,
                     piece: square.piece,
-                    moveNotation: "",
-                    timeLeft: 0,
+                    notation: "",
+                    takenPiece: null
                 }
 
                 if (checkIfPlayersMoveIsCorrect(move, squares)) {
                     const simulatedSquares = simulateSquaresAfterMove(move, squares);
-
                     if (!isKingInCheck(color, simulatedSquares)) {
                         return false;
                     }
@@ -161,7 +165,6 @@ function isKingInCheckmate(color: string, squares: Square[]) {
             }
         }
     }
-
     return true;
 }
 
@@ -193,12 +196,10 @@ function isPlayerInPat(color: string, squares: Square[]) {
             for (let row = 1; row <= 8; row++) {
                 for (let column = 1; column <= 8; column++) {
                     const move = {
-                        rowFrom: square.position.row,
-                        columnFrom: square.position.column,
-                        rowTo: row,
-                        columnTo: column,
+                        from: { row: square.position.row, column: square.position.column} as Coordinate,
+                        to: { row: row, column: column} as Coordinate,
                         piece: square.piece,
-                        timeLeft: 0,
+                        notation: ""
                     } as Move;
                     if (checkIfPlayersMoveIsCorrect(move, squares)) {
                         return false;
@@ -213,7 +214,7 @@ function isPlayerInPat(color: string, squares: Square[]) {
 
 function checkIfSquareIsClearFromAllyPieces(move: Move, squares: Square[]) { 
     const targetSquare = squares.find(
-        (sq) => sq.position.row === move.rowTo && sq.position.column === move.columnTo
+        (sq) => sq.position.row === move.to.row && sq.position.column === move.to.column
     );
 
     if (targetSquare && targetSquare.piece && targetSquare.piece.color === move.piece.color) {
@@ -226,41 +227,41 @@ function checkIfSquareIsClearFromAllyPieces(move: Move, squares: Square[]) {
 function checkPawn(move: Move, squares: Square[]){
     if (move.piece.color === "white"){
         //white pawn
-        if (move.columnFrom !== move.columnTo){
-            if (Math.abs(move.columnFrom - move.columnTo) === 1 && move.rowTo === move.rowFrom + 1){
+        if (move.from.column !== move.to.column){
+            if (Math.abs(move.from.column - move.to.column) === 1 && move.to.row === move.from.row + 1){
                 return checkIfPawnCanTake(move, squares);
             }
             return false;
         }
-        if (move.rowTo === move.rowFrom + 2){
+        if (move.to.row === move.from.row + 2){
             //First move
-            if (move.rowFrom === 2){
+            if (move.from.row === 2){
                 return checkPawnCollision(move, squares);
             }else{
                 return false;
             }
         }
-        if (move.rowTo === move.rowFrom + 1){
+        if (move.to.row === move.from.row + 1){
             return checkPawnCollision(move, squares);
         }
     }
     else{
         //black pawn
-        if (move.columnFrom !== move.columnTo){
-            if (Math.abs(move.columnFrom - move.columnTo) === 1 && move.rowTo === move.rowFrom - 1){
+        if (move.from.column !== move.to.column){
+            if (Math.abs(move.from.column - move.to.column) === 1 && move.to.row === move.from.row - 1){
                 return checkIfPawnCanTake(move, squares);
             }
             return false;
         }
-        if (move.rowTo === move.rowFrom - 2){
+        if (move.to.row === move.from.row - 2){
             //First move
-            if (move.rowFrom === 7){
+            if (move.from.row === 7){
                 return checkPawnCollision(move, squares) ;
             }else{
                 return false;
             }
         }
-        if (move.rowTo === move.rowFrom - 1){
+        if (move.to.row === move.from.row - 1){
             return checkPawnCollision(move, squares);
         }
     }
@@ -269,24 +270,24 @@ function checkPawn(move: Move, squares: Square[]){
 }
 
 function checkPawnCollision(move: Move, squares: Square[]){
-    if (Math.abs(move.rowTo - move.rowFrom) > 1) {
-        if (move.rowTo > move.rowFrom){
+    if (Math.abs(move.to.row - move.from.row) > 1) {
+        if (move.to.row > move.from.row){
             //White
-            if (squares.find((sq) => sq.position.row === move.rowTo - 1 && sq.position.column === move.columnTo)?.piece !== null){//-1 ponieważ to pole które pion by 'przeskoczył'
+            if (squares.find((sq) => sq.position.row === move.to.row - 1 && sq.position.column === move.to.column)?.piece !== null){//-1 ponieważ to pole które pion by 'przeskoczył'
                 return false;
             }
         }else{
             //Black
-            if (squares.find((sq) => sq.position.row === move.rowTo + 1 && sq.position.column === move.columnTo)?.piece !== null){//+1 ponieważ to pole które pion by 'przeskoczył'
+            if (squares.find((sq) => sq.position.row === move.to.row + 1 && sq.position.column === move.to.column)?.piece !== null){//+1 ponieważ to pole które pion by 'przeskoczył'
                 return false;
             }
         }
     }
-    return squares.find((sq) => sq.position.row === move.rowTo && sq.position.column === move.columnTo)?.piece === null;
+    return squares.find((sq) => sq.position.row === move.to.row && sq.position.column === move.to.column)?.piece === null;
 }
 
 function checkIfPawnCanTake(move: Move, squares: Square[]){
-    if (squares.find((sq) => sq.position.row === move.rowTo && sq.position.column === move.columnTo)?.piece !== null){
+    if (squares.find((sq) => sq.position.row === move.to.row && sq.position.column === move.to.column)?.piece !== null){
         return true;
     }
     return false;
@@ -294,7 +295,7 @@ function checkIfPawnCanTake(move: Move, squares: Square[]){
 
 function checkRook(move: Move, squares: Square[]){
 
-    if (move.rowFrom !== move.rowTo && move.columnFrom !== move.columnTo) {
+    if (move.from.row !== move.to.row && move.from.column !== move.to.column) {
         return false;
     }
     
@@ -302,13 +303,13 @@ function checkRook(move: Move, squares: Square[]){
 }
 
 function checkRookCollision(move: Move, squares: Square[]){
-    let deltaRow = move.rowTo > move.rowFrom ? 1 : move.rowTo < move.rowFrom ? -1 : 0;
-    let deltaColumn = move.columnTo > move.columnFrom ? 1 : move.columnTo < move.columnFrom ? -1 : 0;
+    let deltaRow = move.to.row > move.from.row ? 1 : move.to.row < move.from.row ? -1 : 0;
+    let deltaColumn = move.to.column > move.from.column ? 1 : move.to.column < move.from.column ? -1 : 0;
 
-    let currentRow = move.rowFrom + deltaRow;
-    let currentColumn = move.columnFrom + deltaColumn;
+    let currentRow = move.from.row + deltaRow;
+    let currentColumn = move.from.column + deltaColumn;
 
-    while (currentRow !== move.rowTo || currentColumn !== move.columnTo) {
+    while (currentRow !== move.to.row || currentColumn !== move.to.column) {
         const square = squares.find(sq => sq.position.row === currentRow && sq.position.column === currentColumn);
         if (square?.piece !== null) {
             return true;
@@ -322,21 +323,21 @@ function checkRookCollision(move: Move, squares: Square[]){
 
 function checkKnight(move: Move, squares: Square[]){
 
-    if (Math.abs(move.rowFrom - move.rowTo) === 1){
+    if (Math.abs(move.from.row - move.to.row) === 1){
         //Na boki
-        return Math.abs(move.columnFrom - move.columnTo) === 2;
+        return Math.abs(move.from.column - move.to.column) === 2;
     }
-    else if (Math.abs(move.rowFrom - move.rowTo) === 2){
+    else if (Math.abs(move.from.row - move.to.row) === 2){
         //góra/dół
-        return Math.abs(move.columnFrom - move.columnTo) === 1;
+        return Math.abs(move.from.column - move.to.column) === 1;
     }
 
     return false;
 }
 
 function checkBishop(move: Move, squares: Square[]){
-    const deltaRow = Math.abs(move.rowFrom - move.rowTo);
-    const deltaColumn = Math.abs(move.columnFrom - move.columnTo);
+    const deltaRow = Math.abs(move.from.row - move.to.row);
+    const deltaColumn = Math.abs(move.from.column - move.to.column);
 
     if (deltaColumn === deltaRow){
         return !checkBishopCollision(move, squares);
@@ -345,13 +346,13 @@ function checkBishop(move: Move, squares: Square[]){
 }
 
 function checkBishopCollision(move: Move, squares: Square[]){
-    const deltaRow = move.rowTo > move.rowFrom ? 1 : -1;
-    const deltaColumn = move.columnTo > move.columnFrom ? 1 : -1;
+    const deltaRow = move.to.row > move.from.row ? 1 : -1;
+    const deltaColumn = move.to.column > move.from.column ? 1 : -1;
 
-    let currentRow = move.rowFrom + deltaRow;
-    let currentColumn = move.columnFrom + deltaColumn;
+    let currentRow = move.from.row + deltaRow;
+    let currentColumn = move.from.column + deltaColumn;
 
-    while (currentRow !== move.rowTo && currentColumn !== move.columnTo) {
+    while (currentRow !== move.to.row && currentColumn !== move.to.column) {
         const square = squares.find((sq) => sq.position.row === currentRow && sq.position.column === currentColumn && sq.piece !== null);
         if (square) {
             return true;
@@ -364,10 +365,10 @@ function checkBishopCollision(move: Move, squares: Square[]){
 }
 
 function checkQueen(move: Move, squares: Square[]){
-    const deltaRow = Math.abs(move.rowFrom - move.rowTo);
-    const deltaColumn = Math.abs(move.columnFrom - move.columnTo);
+    const deltaRow = Math.abs(move.from.row - move.to.row);
+    const deltaColumn = Math.abs(move.from.column - move.to.column);
 
-    if (deltaColumn === deltaRow || move.rowFrom === move.rowTo || move.columnFrom === move.columnTo){
+    if (deltaColumn === deltaRow || move.from.row === move.to.row || move.from.column === move.to.column){
         return !checkQueenCollision(move, squares);
     }
     return false;
@@ -375,13 +376,13 @@ function checkQueen(move: Move, squares: Square[]){
 }
 
 function checkQueenCollision(move: Move, squares: Square[]){
-    const deltaRow = move.rowTo === move.rowFrom ? 0 : move.rowTo > move.rowFrom ? 1 : -1;
-    const deltaColumn = move.columnTo === move.columnFrom ? 0 : move.columnTo > move.columnFrom ? 1 : -1;
+    const deltaRow = move.to.row === move.from.row ? 0 : move.to.row > move.from.row ? 1 : -1;
+    const deltaColumn = move.to.column === move.from.column ? 0 : move.to.column > move.from.column ? 1 : -1;
 
-    let currentRow = move.rowFrom + deltaRow;
-    let currentColumn = move.columnFrom + deltaColumn;
+    let currentRow = move.from.row + deltaRow;
+    let currentColumn = move.from.column + deltaColumn;
 
-    while (currentRow !== move.rowTo || currentColumn !== move.columnTo) {
+    while (currentRow !== move.to.row || currentColumn !== move.to.column) {
         if (squares.find((sq) => sq.position.row === currentRow && sq.position.column === currentColumn && sq.piece !== null)) {
             return true;
         }
@@ -393,11 +394,11 @@ function checkQueenCollision(move: Move, squares: Square[]){
 }
 
 function checkKing(move: Move, squares: Square[]){
-    if (Math.abs(move.rowTo - move.rowFrom) > 1) return false;
-    if (Math.abs(move.columnTo - move.columnFrom) > 1){
+    if (Math.abs(move.to.row - move.from.row) > 1) return false;
+    if (Math.abs(move.to.column - move.from.column) > 1){
         //Roszada to do
-        if (Math.abs(move.rowTo - move.rowFrom) > 0) return false;
-        if (Math.abs(move.columnTo - move.columnFrom) !== 2) return false;
+        if (Math.abs(move.to.row - move.from.row) > 0) return false;
+        if (Math.abs(move.to.column - move.from.column) !== 2) return false;
         
         
         return false;
@@ -420,8 +421,8 @@ function checkIfEnemiesKingIsInRange(move: Move, squares: Square[]){
     ];
 
     for (const { rowOffset, colOffset } of directions) {
-        const targetRow = move.rowTo + rowOffset;
-        const targetCol = move.columnTo + colOffset;
+        const targetRow = move.to.row + rowOffset;
+        const targetCol = move.to.column + colOffset;
 
         const square = squares.find(
             (sq) => sq.position.row === targetRow && sq.position.column === targetCol && sq.piece && sq.piece.pieceType === "king" && sq.piece.color !== move.piece.color
