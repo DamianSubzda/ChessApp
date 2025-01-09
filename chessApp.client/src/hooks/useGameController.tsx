@@ -19,39 +19,51 @@ import { GameTurn } from "../types/GameTurn.ts";
 import { GameResult } from "../types/GameResult.ts";
 
 export default function useGameController() {
-  const timer = useTimer(0);
-  const enemyTimer = useTimer(0); 
+  const whiteTimer = useTimer(0);
+  const blackTimer = useTimer(0);
   const moveValidator = useMoveValidator();
   const gameOver = useGameOver();
   const drawRequest = useDrawRequest(gameOver.gameResult);
 
   const dispatch = useDispatch();
 
-  const [userRole, setUserRole] = useState("observer"); 
+  const userRole = useRef<string>("observer");
   const player = useRef<Player | null>(null);
-  const [isPlayerMove, setIfPlayerCanMove] = useState<boolean>(false); 
+  const [isPlayerMove, setIfPlayerCanMove] = useState<boolean>(false);
   
   const handlePlayerJoin = (playerData: Player) => {
     player.current = playerData;
-    timer.handleTimeChange(playerData.timeLeft);
-    enemyTimer.handleTimeChange(playerData.timeLeft);
-    setUserRole("player");
+    userRole.current = "player";
   };
 
   const handleGameStart = (game: Game) => {
-    localStorage.setItem("Game", JSON.stringify(game));
+    if (game.playerWhite && game.playerBlack){
+      whiteTimer.handleTimeChange(game.playerWhite.timeLeft);
+      blackTimer.handleTimeChange(game.playerBlack.timeLeft);
+    }
+
     setIfPlayerCanMove(player.current?.color === "white");
+    localStorage.setItem("Game", JSON.stringify(game));
   };
 
-  const handleGameFull = () => {
-    setUserRole("observer");
+  const handleJoinedAsObserver = (game: Game) => {
+    if (game.playerWhite && game.playerBlack){
+      whiteTimer.handleTimeChange(game.playerWhite.timeLeft);
+      blackTimer.handleTimeChange(game.playerBlack.timeLeft);
+    }
+
+    game.turns.forEach((turn) => {
+      handleTurn(turn);
+    });    
+
+    userRole.current = "observer";
   };
 
   const handleMakeTurn = async (square: Square, target: any) => {
-    if (userRole !== "player" || !isPlayerMove) return;
+    if (userRole.current !== "player" || !isPlayerMove) return;
     if (square.piece?.color !== player.current?.color)
       return;
-
+    
     const move = {
       from: { row: square.position.row, column: square.position.column } as Coordinate,
       to: { row: target.row, column: target.column } as Coordinate,
@@ -82,9 +94,9 @@ export default function useGameController() {
     move.notation = notation;
 
     if (player.current) {
-      player.current.timeLeft = timer.timeRef.current;
+      player.current.timeLeft = player.current.color === "white" ? whiteTimer.timeRef.current : blackTimer.timeRef.current;
     }
-
+    
     const turn = {
       player: player.current, 
       move: move,
@@ -99,19 +111,21 @@ export default function useGameController() {
   };
 
   const handleTurn = (turn: GameTurn) => {
-    if (turn.player.connectionId === player.current?.connectionId){
-      //ruch gracza
-      timer.stopTimer();
-      timer.handleTimeChange(turn.player.timeLeft);
-      enemyTimer.startTimer();
+    if (turn.player.color === "white"){
+      whiteTimer.stopTimer();
+      whiteTimer.handleTimeChange(turn.player.timeLeft);
+      blackTimer.startTimer();
     } else {
-      //ruch przeciwnika
-      dispatch(movePiece(turn.move));
-    enemyTimer.stopTimer();
-      enemyTimer.handleTimeChange(turn.player.timeLeft);
-      setIfPlayerCanMove(true);
-      timer.startTimer();
+      blackTimer.stopTimer();
+      blackTimer.handleTimeChange(turn.player.timeLeft);
+      whiteTimer.startTimer();
     }
+
+    if (turn.player.connectionId !== player.current?.connectionId){
+      dispatch(movePiece(turn.move));
+      setIfPlayerCanMove(true);
+    }
+
     dispatch(addPiece(turn.move.takenPiece));
     dispatch(
       addMove({
@@ -122,11 +136,12 @@ export default function useGameController() {
   };
 
   const handleTimeRunOut = async () => {
+    if (gameOver.gameResult !== null || userRole.current !== "player") return;
     GameService.timeRunOut();
   };
 
-  const onClickResignGame = async () => {
-    if (gameOver.gameResult !== null) return;
+  const onClickResignGame = async () => { 
+    if (gameOver.gameResult !== null || userRole.current !== "player") return;
     GameService.resignGame();
   };
 
@@ -137,20 +152,21 @@ export default function useGameController() {
   const handleGameOver = (result: GameResult) => {
     gameOver.handleGameOver(result);
     drawRequest.setCanAcceptDraw(false);
-    timer.stopTimer();
-    enemyTimer.stopTimer();
+    whiteTimer.stopTimer();
+    blackTimer.stopTimer();
     setIfPlayerCanMove(false);
   }
 
   return {
-    gameEnd: gameOver,
+    gameOver,
     drawRequest,
-    timer,
-    enemyTimer,
+    whiteTimer,
+    blackTimer,
     player,
+    userRole,
     handlePlayerJoin,
     handleGameStart,
-    handleGameFull,
+    handleJoinedAsObserver,
     handleMakeTurn,
     handleTurn,
     handleGameOver,

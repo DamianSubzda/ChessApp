@@ -89,7 +89,8 @@ namespace ChessApp.Server.Hubs
                 }
                 else
                 {
-                    await Clients.Caller.SendAsync("GameFull", gameId);
+                    await Groups.AddToGroupAsync(Context.ConnectionId, gameId);
+                    await Clients.Caller.SendAsync("JoinedAsObserver", game);
                     return;
                 }
             }

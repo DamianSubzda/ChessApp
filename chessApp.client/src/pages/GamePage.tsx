@@ -1,6 +1,5 @@
 import "./GamePage.scss";
 import React from "react";
-import config from "../config.json";
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -36,7 +35,7 @@ function GamePage() {
     if (isValidGameId !== true) return;
 
     const handleBeforeUnload = () => {
-      if (gameId) {
+      if (gameId && gameController.gameOver.gameResult === null && gameController.userRole.current === "player") {
         GameService.leaveGame();
       }
     };
@@ -47,7 +46,13 @@ function GamePage() {
     };
   }, [isValidGameId, gameId]);
 
-  useEffect(() => {
+    useEffect(() => {
+    const playerName = localStorage.getItem("PlayerName");
+    if (!playerName) {
+        navigate("/player-name");
+        return;
+    }
+
     if (isValidGameId === false || gameId === undefined) {
       navigate("/lobby");
       return;
@@ -55,12 +60,11 @@ function GamePage() {
 
     dispatch(clearPieces());
     dispatch(clearMoves());
-
-    const playerName = localStorage.getItem("PlayerName") ?? "";
+    
     GameService.joinGame(gameId, playerName);
 
     GameService.onGameStarted(gameController.handleGameStart);
-    GameService.onGameFull(gameController.handleGameFull);
+    GameService.onObserverJoined(gameController.handleJoinedAsObserver);
     GameService.onPlayerJoined(gameController.handlePlayerJoin);
     GameService.onRecivedMove(gameController.handleTurn);
     GameService.onGameOver(gameController.handleGameOver)
@@ -68,7 +72,7 @@ function GamePage() {
 
     return () => {
       const cleanup = async () => {
-        if (gameId) {
+        if (gameId && gameController.gameOver.gameResult === null && gameController.userRole.current === "player") {
           await GameService.leaveGame();
         }
         GameService.stopConnection();
@@ -83,7 +87,7 @@ function GamePage() {
   
   return (
     <div className="game-page">
-      <Result result={gameController.gameEnd.gameResult} />
+      <Result result={gameController.gameOver.gameResult} />
       <div className="game-page__left">
         <div className="taken-pieces taken-pieces--enemy">
           <TakenPieces
@@ -96,17 +100,17 @@ function GamePage() {
         </div>
         <Timer
           className="timer"
-          time={gameController.enemyTimer.time}
+          time={gameController.player.current?.color === "white" ? gameController.blackTimer.time : gameController.whiteTimer.time}
           onTimeRunOut={() => {}}
-          onTimeChange={gameController.enemyTimer.handleTimeChange}
-          isTimerRunning={gameController.enemyTimer.isRunning}
+          onTimeChange={gameController.player.current?.color === "white" ? gameController.blackTimer.handleTimeChange : gameController.whiteTimer.handleTimeChange}
+          isTimerRunning={gameController.player.current?.color === "white" ? gameController.blackTimer.isRunning : gameController.whiteTimer.isRunning}
         />
         <Timer
           className="timer"
-          time={gameController.timer.time}
+          time={gameController.player.current?.color === "white" ? gameController.whiteTimer.time : gameController.blackTimer.time}
           onTimeRunOut={gameController.handleTimeRunOut}
-          onTimeChange={gameController.timer.handleTimeChange}
-          isTimerRunning={gameController.timer.isRunning}
+          onTimeChange={gameController.player.current?.color === "white" ? gameController.whiteTimer.handleTimeChange : gameController.blackTimer.handleTimeChange}
+          isTimerRunning={gameController.player.current?.color === "white" ? gameController.whiteTimer.isRunning : gameController.blackTimer.isRunning}
         />
         <div className="taken-pieces taken-pieces--player">
           <TakenPieces
@@ -132,15 +136,20 @@ function GamePage() {
               handleDeclinedDraw={gameController.drawRequest.declineDrawRequest}
             />
           )}
-          <button onClick={gameController.onClickResignGame}>
-            <ResignIcon size={32} />
-          </button>
-          <button
-            onClick={gameController.drawRequest.sendDrawRequest}
-            ref={gameController.drawRequest.setButtonRef}
-          >
-            <DrawRequestIcon size={32} />
-          </button>
+          {gameController.userRole.current === "player" &&
+            <>
+              <button onClick={gameController.onClickResignGame}>
+                <ResignIcon size={32} />
+              </button>
+              <button
+                onClick={gameController.drawRequest.sendDrawRequest}
+                ref={gameController.drawRequest.setButtonRef}
+              >
+                <DrawRequestIcon size={32} />
+              </button>
+            </>
+          }
+          
         </div>
       </div>
     </div>
