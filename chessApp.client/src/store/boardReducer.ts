@@ -15,17 +15,23 @@ const boardSlice = createSlice({
       state.squares = setupInitialBoard();
     },
     reverseBoard(state) {
-      state.squares = [...state.squares].reverse(); //Tu zmiana visibleNotation
+      if (state.squares[0].visibleNotation){
+        state.squares = [...state.squares].reverse();
+        state.squares.forEach((sq) => sq.visibleNotation = sq.position.row === 8 || sq.position.column === 8)
+      }
+      else {
+        state.squares = [...state.squares].reverse();
+        state.squares.forEach((sq) => sq.visibleNotation = sq.position.row === 1 || sq.position.column === 1)
+      }
+      
     },
     movePiece(state, action: PayloadAction<Move>) {
       const move = action.payload;
       //Promocja
-      if (move.piece.src === "wp.png" && move.to.row === 8) {
-        move.piece.src = "wq.png";
-        move.piece.pieceType = "queen";
-      } else if (move.piece.src === "bp.png" && move.to.row === 1) {
-        move.piece.src = "bq.png";
-        move.piece.pieceType = "queen";
+      if (move.piece.pieceType === "pawn" && move.piece.color === "white" && move.to.row === 8) {
+        move.piece = { src: "wq.png", pieceType: "queen", color: "white"} as Piece;
+      } else if (move.piece.pieceType === "pawn" && move.piece.color === "black" && move.to.row === 1) {
+        move.piece = { src: "bq.png", pieceType: "queen", color: "black"} as Piece;
       }
 
       state.squares = state.squares.map((square) => {
@@ -101,7 +107,7 @@ function setupInitialBoard(): Square[] {
 
     return {
       position: { row: row, column: column },
-      visibleNotation: true, // Do ustawienia - tu dla białych.
+      visibleNotation: row === 1 ? true : column === 1 ? true : false,
       piece: piece,
     } as Square;
   });
