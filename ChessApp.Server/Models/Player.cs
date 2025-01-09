@@ -4,6 +4,7 @@
     {
         public required string PlayerName { get; set; }
         public required string ConnectionId { get; set; }
-        public bool IsWhite { get; set; } 
+        public required string Color { get; set; }
+        public required int TimeLeft {  get; set; }
     }
 }

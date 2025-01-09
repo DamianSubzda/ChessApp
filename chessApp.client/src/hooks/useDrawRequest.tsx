@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import GameService from "../services/GameService.ts";
+import { GameResult } from "../types/GameResult.ts";
 
-export default function useDrawRequest(gameResult: string | null) {
+export default function useDrawRequest(gameResult: GameResult | null) {
   const [canAcceptDraw, setCanAcceptDraw] = useState(false);
   const drawRequestButtonRef = useRef<HTMLButtonElement | null>(null);
   

@@ -19,8 +19,8 @@ namespace ChessApp.Server.Controllers
             _hubContext = hubContext;
         }
 
-        [HttpPost("abandon-game")]
-        public async Task<IActionResult> AbandonGame([FromBody] string gameId)
+        [HttpGet("game-status")]
+        public ActionResult<GameStatus> GetGameStatus([FromQuery] string gameId)
         {
             try
             {
@@ -29,17 +29,19 @@ namespace ChessApp.Server.Controllers
                     return BadRequest("Invalid game data.");
                 }
 
-                _gameService.SetGameStatusToAbandoned(gameId);
+                var game = _gameService.GetGame(gameId);
 
-                await _hubContext.Clients.Group(gameId).SendAsync("PlayerLeft");
-                return Ok("Game abandoned successfully.");
+                if (game == null)
+                {
+                    throw new GameNotFoundException(gameId);
+                }
+
+                return Ok(game.Status);
             }
-            catch(GameNotFoundException ex)
+            catch (GameNotFoundException ex)
             {
                 return NotFound(ex.Message);
             }
-
-
         }
     }
 }

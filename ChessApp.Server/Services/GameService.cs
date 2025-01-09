@@ -8,9 +8,9 @@ namespace ChessApp.Server.Services
     {
         private readonly ConcurrentDictionary<string, Game> _games = new(); //Future database.
 
-        public bool TryAddGame(string gameId, Game game)
+        public bool TryAddGame(Game game)
         {
-            return _games.TryAdd(gameId, game);
+            return _games.TryAdd(game.GameId, game);
         }
 
         public bool TryRemoveGame(string gameId, out Game? game)

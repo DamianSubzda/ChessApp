@@ -9,61 +9,63 @@ import { Square } from "../types/Square";
 import { generateChessNotation } from "../utils/movesNotation.ts";
 import useTimer from "./useTimer.tsx";
 import useDrawRequest from "./useDrawRequest.tsx";
-import useGameEnd from "./useGameEnd.tsx";
+import useGameOver from "./useGameOver.tsx";
 import useMoveValidator from "./useMoveValidator.tsx";
 import { useDispatch } from "react-redux";
 import { Player } from "../types/Player";
+import { Game } from "../types/Game.ts";
+import { Coordinate } from "../types/Coordinate.ts";
+import { GameTurn } from "../types/GameTurn.ts";
+import { GameResult } from "../types/GameResult.ts";
 
 export default function useGameController() {
-  const timer = useTimer(600)
-  const enemyTimer = useTimer(600);
+  const timer = useTimer(0);
+  const enemyTimer = useTimer(0); 
   const moveValidator = useMoveValidator();
-  const gameEnd = useGameEnd();
-  const drawRequest = useDrawRequest(gameEnd.gameResult);
+  const gameOver = useGameOver();
+  const drawRequest = useDrawRequest(gameOver.gameResult);
 
   const dispatch = useDispatch();
 
-  const [userRole, setUserRole] = useState("observer");
-  const isPlayerWhiteRef = useRef<boolean>(true);
-  const [isPlayerMove, setIfPlayerCanMove] = useState<boolean>(false);
+  const [userRole, setUserRole] = useState("observer"); 
+  const player = useRef<Player | null>(null);
+  const [isPlayerMove, setIfPlayerCanMove] = useState<boolean>(false); 
   
   const handlePlayerJoin = (playerData: Player) => {
-    isPlayerWhiteRef.current = playerData.isWhite;
+    player.current = playerData;
+    timer.handleTimeChange(playerData.timeLeft);
+    enemyTimer.handleTimeChange(playerData.timeLeft);
     setUserRole("player");
   };
 
-  const handleGameStart = () => {
-    setIfPlayerCanMove(isPlayerWhiteRef.current);
+  const handleGameStart = (game: Game) => {
+    localStorage.setItem("Game", JSON.stringify(game));
+    setIfPlayerCanMove(player.current?.color === "white");
   };
 
   const handleGameFull = () => {
     setUserRole("observer");
   };
 
-  const handleMakeMove = async (square: Square, target: any) => {
+  const handleMakeTurn = async (square: Square, target: any) => {
     if (userRole !== "player" || !isPlayerMove) return;
-    if (square.piece?.color !== (isPlayerWhiteRef.current ? "white" : "black"))
+    if (square.piece?.color !== player.current?.color)
       return;
 
     const move = {
-      rowFrom: square.position.row,
-      columnFrom: square.position.column,
-      rowTo: target.row,
-      columnTo: target.column,
+      from: { row: square.position.row, column: square.position.column } as Coordinate,
+      to: { row: target.row, column: target.column } as Coordinate,
       piece: square.piece,
-      timeLeft: timer.timeRef.current,
-      moveNotation: "",
     } as Move;
-
     if (!moveValidator.isMoveCorrect(move)) return;
 
     const currentSquares = [...moveValidator.squares];
-    const piece: Piece | null =
+    const takenPiece: Piece | null =
       currentSquares.find(
-        (sq) => sq.position.column === move.columnTo && sq.position.row === move.rowTo
+        (sq) => sq.position.column === move.to.column && sq.position.row === move.to.row
       )?.piece ?? null;
+    move.takenPiece = takenPiece;
 
-    dispatch(addPiece(piece));
     dispatch(movePiece(move));
 
     const isCheck = moveValidator.isPlayerInCheck(move);
@@ -77,132 +79,83 @@ export default function useGameController() {
       isCheckmate,
       isPat
     );
-    move.moveNotation = notation;
+    move.notation = notation;
 
-    GameService.makeMove(move);
+    if (player.current) {
+      player.current.timeLeft = timer.timeRef.current;
+    }
 
-    dispatch(
-      addMove({ notation, color: isPlayerWhiteRef.current ? "white" : "black" })
-    );
+    const turn = {
+      player: player.current, 
+      move: move,
+      isCheckmate: isCheckmate,
+      isPat: isPat,
+    } as GameTurn
+    GameService.makeTurn(turn);
 
     drawRequest.setCanAcceptDraw(false);
-    enemyTimer.startTimer();
-    timer.stopTimer();
     setIfPlayerCanMove(false);
 
-    if (isCheckmate) {
-      GameService.checkmate();
-      gameEnd.handleVictory("Checkmate!");
-      handleGameEnd();
-      return;
-    }
-
-    if (isPat) {
-      GameService.pat();
-      gameEnd.handleDraw("Enemy has no legal moves.");
-      handleGameEnd();
-      return;
-    }
   };
 
-  const handleOpponentMove = (move: Move) => {
+  const handleTurn = (turn: GameTurn) => {
+    if (turn.player.connectionId === player.current?.connectionId){
+      //ruch gracza
+      timer.stopTimer();
+      timer.handleTimeChange(turn.player.timeLeft);
+      enemyTimer.startTimer();
+    } else {
+      //ruch przeciwnika
+      dispatch(movePiece(turn.move));
     enemyTimer.stopTimer();
-    enemyTimer.handleTimeChange(move.timeLeft);
-
-    const currentSquares = [...moveValidator.squaresRef.current];
-    const piece: Piece | null =
-      currentSquares.find(
-        (sq) => sq.position.column === move.columnTo && sq.position.row === move.rowTo
-      )?.piece ?? null;
-
-    dispatch(addPiece(piece));
+      enemyTimer.handleTimeChange(turn.player.timeLeft);
+      setIfPlayerCanMove(true);
+      timer.startTimer();
+    }
+    dispatch(addPiece(turn.move.takenPiece));
     dispatch(
       addMove({
-        notation: move.moveNotation,
-        color: isPlayerWhiteRef.current ? "black" : "white",
+        notation: turn.move.notation,
+        color: turn.player.color,
       })
     );
-
-    dispatch(movePiece(move));
-    setIfPlayerCanMove(true);
-    timer.startTimer();
   };
 
   const handleTimeRunOut = async () => {
-    handleGameEnd();
-    gameEnd.handleDefeat("Run out of time.");
     GameService.timeRunOut();
   };
 
-  const handleEnemyTimeRunOut = () => {
-    handleGameEnd();
-    gameEnd.handleVictory("Enemy run out of time!");
-  };
-
-  const handleLostByCheckmate = () => {
-    handleGameEnd();
-    gameEnd.handleDefeat("Checkmate");
-  };
-
-  const handleDrawByPat = () => {
-    handleGameEnd();
-    gameEnd.handleDraw("You have no legal moves.");
-  };
-
-  const handleEnemyLeft = () => {
-    handleGameEnd();
-    gameEnd.handleVictory("Enemy player left the game!");
-  };
-
   const onClickResignGame = async () => {
-    if (gameEnd.gameResult !== null) return;
-    handleGameEnd();
-    gameEnd.handleDefeat("Lose by resign");
+    if (gameOver.gameResult !== null) return;
     GameService.resignGame();
   };
 
   const onClickAcceptDrawRequest = () => {
-    handleGameEnd();
-    gameEnd.handleDraw("Players aggred to a draw!");
     drawRequest.acceptDrawRequest();
   };
 
-  const handleAcceptedDraw = () => {
-    handleGameEnd();
-    gameEnd.handleDraw("Players aggred to a draw!");
-  };
-
-  const handleEnemyResignGame = () => {
-    handleGameEnd();
-    gameEnd.handleVictory("Enemy player resigned!");
-  };
-
-  const handleGameEnd = () => {
+  const handleGameOver = (result: GameResult) => {
+    gameOver.handleGameOver(result);
     drawRequest.setCanAcceptDraw(false);
     timer.stopTimer();
     enemyTimer.stopTimer();
     setIfPlayerCanMove(false);
-  };
+  }
 
   return {
-    gameEnd,
+    gameEnd: gameOver,
     drawRequest,
     timer,
     enemyTimer,
-    isPlayerWhiteRef,
+    player,
     handlePlayerJoin,
     handleGameStart,
     handleGameFull,
-    handleMakeMove,
-    handleOpponentMove,
+    handleMakeTurn,
+    handleTurn,
+    handleGameOver,
     handleTimeRunOut,
-    handleEnemyTimeRunOut,
-    handleLostByCheckmate,
-    handleDrawByPat,
-    handleEnemyLeft,
     onClickResignGame,
     onClickAcceptDrawRequest,
-    handleAcceptedDraw,
-    handleEnemyResignGame
   }
 }

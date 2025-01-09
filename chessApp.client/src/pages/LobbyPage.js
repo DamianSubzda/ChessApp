@@ -1,4 +1,4 @@
-import GameList from "./../components/lobby/GameList"
+import GameList from "./../components/lobby/GameList.tsx"
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LobbyService from "../services/LobbyService.ts";

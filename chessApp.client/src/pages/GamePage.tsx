@@ -37,9 +37,7 @@ function GamePage() {
 
     const handleBeforeUnload = () => {
       if (gameId) {
-        const payload = JSON.stringify(gameId);
-        const blob = new Blob([payload], { type: "application/json" });
-        navigator.sendBeacon(`${config.apiURL}abandon-game`, blob);
+        GameService.leaveGame();
       }
     };
 
@@ -64,37 +62,33 @@ function GamePage() {
     GameService.onGameStarted(gameController.handleGameStart);
     GameService.onGameFull(gameController.handleGameFull);
     GameService.onPlayerJoined(gameController.handlePlayerJoin);
-    GameService.onOpponentMoveMade(gameController.handleOpponentMove);
-    GameService.onPlayerLeft(gameController.handleEnemyLeft);
-    GameService.onTimeRunOut(gameController.handleEnemyTimeRunOut);
-    GameService.onCheckmate(gameController.handleLostByCheckmate);
-    GameService.onPat(gameController.handleDrawByPat);
+    GameService.onRecivedMove(gameController.handleTurn);
+    GameService.onGameOver(gameController.handleGameOver)
     GameService.onDrawRequest(gameController.drawRequest.receivedDrawRequest);
-    GameService.onAcceptDraw(gameController.handleAcceptedDraw);
-    GameService.onDeclineDraw(() => {});
-    GameService.onResign(gameController.handleEnemyResignGame);
 
     return () => {
-      if (gameId) {
-        const payload = JSON.stringify(gameId);
-        const blob = new Blob([payload], { type: "application/json" });
-        navigator.sendBeacon(`${config.apiURL}abandon-game`, blob);
-      }
-      GameService.stopConnection();
+      const cleanup = async () => {
+        if (gameId) {
+          await GameService.leaveGame();
+        }
+        GameService.stopConnection();
+      };
+  
+      cleanup();
     };
-  }, [isValidGameId, gameId]);
+  }, [isValidGameId, gameId, dispatch, navigate]);
 
   if (isValidGameId === null) return <p>Verifying game ID...</p>;
   if (isValidGameId === false) return <p>Invalid game ID. Redirecting...</p>;
   
   return (
     <div className="game-page">
-      <Result result={gameController.gameEnd.gameResult} reason={gameController.gameEnd.endGameReason} />
+      <Result result={gameController.gameEnd.gameResult} />
       <div className="game-page__left">
         <div className="taken-pieces taken-pieces--enemy">
           <TakenPieces
             groupedPieces={
-              gameController.isPlayerWhiteRef.current
+              gameController.player.current?.color === "white"
                 ? takenPieces.whiteGroupedPieces
                 : takenPieces.blackGroupedPieces
             }
@@ -103,7 +97,7 @@ function GamePage() {
         <Timer
           className="timer"
           time={gameController.enemyTimer.time}
-          onTimeRunOut={gameController.handleEnemyTimeRunOut}
+          onTimeRunOut={() => {}}
           onTimeChange={gameController.enemyTimer.handleTimeChange}
           isTimerRunning={gameController.enemyTimer.isRunning}
         />
@@ -117,7 +111,7 @@ function GamePage() {
         <div className="taken-pieces taken-pieces--player">
           <TakenPieces
             groupedPieces={
-              !gameController.isPlayerWhiteRef.current
+              gameController.player.current?.color !== "white"
                 ? takenPieces.whiteGroupedPieces
                 : takenPieces.blackGroupedPieces
             }
@@ -126,8 +120,8 @@ function GamePage() {
       </div>
 
       <Chessboard
-        isPlayerWhite={gameController.isPlayerWhiteRef.current}
-        makeMove={gameController.handleMakeMove}
+        isPlayerWhite={gameController.player.current?.color === "white"}
+        makeMove={gameController.handleMakeTurn}
       />
       <div className="game-page__right">
         <MovesHistory />

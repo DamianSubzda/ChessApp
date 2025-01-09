@@ -1,6 +1,8 @@
 import SignalRService from "./SignalRService.ts";
 import config from "./../config.json";
-import { Move } from "../types/Move";
+import { Game } from "../types/Game.ts";
+import { GameTurn } from "../types/GameTurn.ts";
+import { GameResult } from "../types/GameResult.ts";
 import { Player } from "../types/Player.ts";
 
 class GameService extends SignalRService {
@@ -16,7 +18,7 @@ class GameService extends SignalRService {
     });
   }
 
-  public onGameStarted(callback: () => void): void {
+  public onGameStarted(callback: (game: Game) => void): void {
     this.on("GameStarted", callback);
   }
 
@@ -24,23 +26,24 @@ class GameService extends SignalRService {
     this.on("GameFull", callback);
   }
 
-  public onPlayerJoined(callback: (playerData: Player) => void): void {
+  public onPlayerJoined(callback: (player: Player) => void): void {
     this.on("PlayerJoined", callback);
   }
 
-  public async makeMove(move: Move) {
-    await this.invoke("MakeMove", this.gameId, move);
+  public async makeTurn(turn: GameTurn) {
+    await this.invoke("PlayerMadeGameTurn", this.gameId, turn);
   }
 
-  public onOpponentMoveMade(callback: (move: Move) => void): void {
-    this.on("MadeMove", callback);
+  public onRecivedMove(callback: (turn: GameTurn) => void): void {
+    this.on("MadeTurn", callback);
   }
 
-  public onPlayerLeft(callback: () => void): void {
-    this.on("PlayerLeft", async () => {
-        callback();
-        await this.stopConnection();
-    });
+  public onGameOver(callback: (result: GameResult) => void): void {
+    this.on("GameOver", callback);
+  }
+
+  public async leaveGame(){
+    await this.invoke("LeaveGameRoom", this.gameId);
   }
 
   public onTimeRunOut(callback: () => void): void {

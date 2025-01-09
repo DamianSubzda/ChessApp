@@ -1,7 +1,14 @@
+import { Game } from "../../types/Game";
 import "./GameList.scss"
-import GameRecord from "./GameRecord";
+import GameRecord from "./GameRecord.tsx";
+import React from "react";
 
-function GameList({games, joinGame}){
+type GameListProps = {
+    games: Game[];
+    joinGame: (game: Game) => void
+}
+
+function GameList({games, joinGame}: GameListProps){
     return (
         <>
             <div className="lobby-panel">
@@ -18,7 +25,7 @@ function GameList({games, joinGame}){
                                 <p>Game ID</p>
                                 <p> </p>
                             </div>
-                            {games.map((game, index) => (
+                            {games.map((game: Game, index: number) => (
                                 <div key={game.gameId}>
                                     <GameRecord index={index} game={game} joinGame={joinGame}/>
                                 </div>

@@ -1,19 +1,19 @@
+import { GameResult } from "../../types/GameResult";
 import "./Result.scss"
 
 import React from "react";
 
 type ResultPropsType = {
-    result: string | null,
-    reason: string | null
+    result: GameResult | null
 }
 
-function Result({ result, reason }: ResultPropsType) {
+function Result({ result }: ResultPropsType) {
     return (
         <>
             { result && (
             <div className="result-notification">
-                <h1>{result}</h1>
-                <h2>reason: {reason}</h2>
+                <h1>{result.result}</h1>
+                <h2>reason: {result.reason}</h2>
             </div> 
             )}
         </>

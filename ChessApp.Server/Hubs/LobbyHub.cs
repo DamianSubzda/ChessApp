@@ -20,19 +20,14 @@ namespace ChessApp.Server.Hubs
 
         public async Task<Game?> CreateGame(string createdBy)
         {
-            string gameId = Guid.NewGuid().ToString();
-
             var game = new Game
             {
-                GameId = gameId,
                 CreatedBy = createdBy,
-                CreatedTimeAt = TimeOnly.FromDateTime(DateTime.Now),
-                Status = GameStatus.Waiting
             };
 
-            if (_lobbyService.TryAddGame(gameId, game))
+            if (_lobbyService.TryAddGame(game))
             {
-                await Groups.AddToGroupAsync(Context.ConnectionId, gameId);
+                await Groups.AddToGroupAsync(Context.ConnectionId, game.GameId);
                 await Clients.Caller.SendAsync("GameCreated", game);
                 await Clients.Others.SendAsync("GameAdded", game);
                 return game;

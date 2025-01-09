@@ -1,13 +1,16 @@
 ﻿using ChessApp.Server.Exceptions;
 using ChessApp.Server.Models;
 using ChessApp.Server.Services;
+using ChessApp.Server.Utilities;
 using Microsoft.AspNetCore.SignalR;
+using System.Collections.Concurrent;
+using System.Numerics;
 
 namespace ChessApp.Server.Hubs
 {
     public class GameHub : Hub
     {
-        private static readonly SemaphoreSlim Semaphore = new(1, 1);
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> GameSemaphores = new();
         private readonly GameService _gameService;
 
         public GameHub(GameService gameService)
@@ -17,42 +20,72 @@ namespace ChessApp.Server.Hubs
 
         public async Task JoinGameRoom(string gameId, string playerName)
         {
-            await Semaphore.WaitAsync();
+            var semaphore = GameSemaphores.GetOrAdd(gameId, _ => new SemaphoreSlim(1, 1));
+            await semaphore.WaitAsync();
 
             try
             {
                 var game = _gameService.GetGame(gameId) ?? throw new GameNotFoundException(gameId);
 
-                if (game.Player1 == null)
+                if (game.PlayerWhite?.ConnectionId == Context.ConnectionId || game.PlayerBlack?.ConnectionId == Context.ConnectionId)
+                {
+                    return;
+                }
+
+                if (game.PlayerWhite == null && game.PlayerBlack == null)
                 {
                     Random random = new();
                     bool isPlayerWhite = random.Next(2) == 0;
 
-                    game.Player1 = new Player
+                    var player = new Player
                     {
                         ConnectionId = Context.ConnectionId,
                         PlayerName = playerName,
-                        IsWhite = isPlayerWhite
-                    };
-                    await Groups.AddToGroupAsync(Context.ConnectionId, gameId);
-                    await Clients.Caller.SendAsync("PlayerJoined", game.Player1);
-                }
-                else if (game.Player2 == null)
-                {
-                    game.Player2 = new Player
-                    {
-                        PlayerName = playerName,
-                        ConnectionId = Context.ConnectionId,
-                        IsWhite = !game.Player1.IsWhite,
+                        Color = isPlayerWhite ? "white" : "black",
+                        TimeLeft = GameTypeUtil.GetGameTimeForGameType(game.Type)
                     };
 
+                    if (isPlayerWhite)
+                    {
+                        game.PlayerWhite = player;
+                    }
+                    else
+                    {
+                        game.PlayerBlack = player;
+                    }
+
                     await Groups.AddToGroupAsync(Context.ConnectionId, gameId);
-                    await Clients.Caller.SendAsync("PlayerJoined", game.Player2);
-                    await Clients.Group(gameId).SendAsync("GameStarted");
+                    await Clients.Caller.SendAsync("PlayerJoined", player);
                 }
-                else if (game.Player1.ConnectionId == Context.ConnectionId || game.Player2.ConnectionId == Context.ConnectionId)
+                else if (game.PlayerWhite == null && game.PlayerBlack != null)
                 {
-                    return;
+                    var player = new Player
+                    {
+                        PlayerName = playerName,
+                        ConnectionId = Context.ConnectionId,
+                        Color = "white",
+                        TimeLeft = GameTypeUtil.GetGameTimeForGameType(game.Type)
+                    };
+                    game.PlayerWhite = player;
+
+                    await Groups.AddToGroupAsync(Context.ConnectionId, gameId);
+                    await Clients.Caller.SendAsync("PlayerJoined", player);
+                    await Clients.Group(gameId).SendAsync("GameStarted", game);
+                }
+                else if (game.PlayerWhite != null && game.PlayerBlack == null)
+                {
+                    var player = new Player
+                    {
+                        PlayerName = playerName,
+                        ConnectionId = Context.ConnectionId,
+                        Color = "black",
+                        TimeLeft = GameTypeUtil.GetGameTimeForGameType(game.Type)
+                    };
+                    game.PlayerBlack = player;
+
+                    await Groups.AddToGroupAsync(Context.ConnectionId, gameId);
+                    await Clients.Caller.SendAsync("PlayerJoined", player);
+                    await Clients.Group(gameId).SendAsync("GameStarted", game);
                 }
                 else
                 {
@@ -60,83 +93,213 @@ namespace ChessApp.Server.Hubs
                     return;
                 }
             }
-            catch (GameNotFoundException ex)
+            catch (GameNotFoundException)
             {
                 await Clients.Caller.SendAsync("GameNotFound", gameId);
                 return;
             }
             finally
             {
-                Semaphore.Release();
+                semaphore.Release();
             }
         }
 
         public async Task LeaveGameRoom(string gameId)
         {
+            var resultLost = new GameResult { Result = "You lost.", Reason = "You left the game." };
+            var resultWin = new GameResult { Result = "You won!", Reason = "Enemy player left the game!" };
+
+            var resultObserver = new GameResult { Result = "", Reason = "Enemy player left the game!" };
+
             try
             {
                 var game = _gameService.GetGame(gameId) ?? throw new GameNotFoundException(gameId);
                 game.Status = GameStatus.Abandoned;
+
+                var playerLost = game.PlayerBlack?.ConnectionId == Context.ConnectionId ? game.PlayerBlack : game.PlayerWhite;
+                var playerWin = game.PlayerBlack?.ConnectionId == Context.ConnectionId ? game.PlayerWhite : game.PlayerBlack;
+
+                var excludedClients = new List<string>();
+
+                if (playerWin != null)
+                {
+                    await Clients.Client(playerWin.ConnectionId).SendAsync("GameOver", resultWin);
+                    excludedClients.Add(playerWin.ConnectionId);
+                    resultObserver.Result = $"Player {playerWin.PlayerName} wins!";
+                }
+
+                if (playerLost != null)
+                {
+                    await Clients.Client(playerLost.ConnectionId).SendAsync("GameOver", resultLost);
+                    excludedClients.Add(playerLost.ConnectionId);
+                }
+
+                await Clients.GroupExcept(gameId, excludedClients).SendAsync("GameOver", resultObserver);
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, gameId);
-                await Clients.Group(gameId).SendAsync("PlayerLeft");
             }
-            catch (GameNotFoundException ex)
+            catch (GameNotFoundException)
             {
+                await Clients.Caller.SendAsync("GameNotFound", gameId);
                 return;
             }
         }
 
-        public async Task MakeMove(string gameId, Move move)
+        public async Task PlayerMadeGameTurn(string gameId, GameTurn turn)
         {
-            if (move.TimeLeft <= 0)
+            try
             {
-                await TimeRunOut(gameId);
+                if (turn.Player.TimeLeft <= 0)
+                {
+                    await TimeRunOut(gameId);
+                }
+                else
+                {
+                    await Clients.Group(gameId).SendAsync("MadeTurn", turn);
+
+                    var game = _gameService.GetGame(gameId) ?? throw new GameNotFoundException(gameId);
+                    game.Turns.Add(turn);
+
+                    if (turn.IsCheckmate)
+                    {
+                        var caller = turn.Player == game.PlayerWhite ? game.PlayerWhite : game.PlayerBlack;
+                        var receiver = turn.Player == game.PlayerWhite ? game.PlayerBlack : game.PlayerWhite;
+
+                        if (caller != null && receiver != null)
+                        {
+                            await PlayerCheckmated(gameId, caller, receiver);
+                        }
+                        return;
+                    }
+
+                    if (turn.IsPat)
+                    {
+                        var caller = turn.Player == game.PlayerWhite ? game.PlayerWhite : game.PlayerBlack;
+                        var receiver = turn.Player == game.PlayerWhite ? game.PlayerBlack : game.PlayerWhite;
+
+                        if (caller != null && receiver != null)
+                        {
+                            await PlayerInPat(gameId, caller, receiver);
+                        }
+                        return;
+                    }
+                }
             }
-            else
+            catch (GameNotFoundException)
             {
-                await Clients.OthersInGroup(gameId).SendAsync("MadeMove", move);
+                await Clients.Caller.SendAsync("GameNotFound", gameId);
+                return;
             }
 
         }
 
         public async Task TimeRunOut(string gameId)
         {
-            await Clients.OthersInGroup(gameId).SendAsync("TimeRunOut");
+            try
+            {
+                var game = _gameService.GetGame(gameId) ?? throw new GameNotFoundException(gameId);
+
+                var caller = Context.ConnectionId == game.PlayerWhite?.ConnectionId ? game.PlayerWhite : game.PlayerBlack;
+                var receiver = Context.ConnectionId == game.PlayerWhite?.ConnectionId ? game.PlayerBlack : game.PlayerWhite;
+
+                var playerLostResult = new GameResult { Result = "You lost.", Reason = "You ran out of time." };
+                var playerWonResult = new GameResult { Result = "You won!", Reason = "Enemy ran out of time!" };
+
+                var observersResult = new GameResult { Result = $"Player {receiver?.PlayerName} won!", Reason = "Enemy ran out of time!" };
+
+                await Clients.Client(caller.ConnectionId).SendAsync("GameOver", playerLostResult);
+                await Clients.Client(receiver.ConnectionId).SendAsync("GameOver", playerWonResult);
+                await Clients.GroupExcept(gameId, [caller.ConnectionId, receiver.ConnectionId]).SendAsync("GameOver", observersResult);
+                _gameService.SetGameStatusToEnded(gameId);
+            }
+            catch (GameNotFoundException)
+            {
+                await Clients.Caller.SendAsync("GameNotFound", gameId);
+                return;
+            }
+        }
+
+        public async Task PlayerCheckmated(string gameId, Player caller, Player receiver)
+        {
+            var playerLostResult = new GameResult { Result = "You lost.", Reason = "You lost by checkmate." };
+            var playerWonResult = new GameResult { Result = "You won!", Reason = "Checkmate!" };
+
+            var observersResult = new GameResult { Result = $"Player {caller.PlayerName} won!", Reason = "Checkmate!" };
+
+            await Clients.Client(caller.ConnectionId).SendAsync("GameOver", playerWonResult);
+            await Clients.Client(receiver.ConnectionId).SendAsync("GameOver", playerLostResult);
+            await Clients.GroupExcept(gameId, [caller.ConnectionId, receiver.ConnectionId]).SendAsync("GameOver", observersResult);
+
             _gameService.SetGameStatusToEnded(gameId);
         }
 
-        public async Task PlayerCheckmated(string gameId)
+        public async Task PlayerInPat(string gameId, Player caller, Player receiver)
         {
-            await Clients.OthersInGroup(gameId).SendAsync("Checkmate");
-            _gameService.SetGameStatusToEnded(gameId);
-        }
+            var resultDrawCaller = new GameResult { Result = "Tie!", Reason = "Enemy has no legal moves!" };
+            var resultDrawReceiver = new GameResult { Result = "Tie!", Reason = "You have no legal moves!" };
 
-        public async Task PlayerInPat(string gameId)
-        {
-            await Clients.OthersInGroup(gameId).SendAsync("Pat");
+            var observersResult = new GameResult { Result = "Tie!", Reason = $"Player {receiver} has no legal moves!" };
+
+            await Clients.Client(caller.ConnectionId).SendAsync("GameOver", resultDrawCaller);
+            await Clients.Client(receiver.ConnectionId).SendAsync("GameOver", resultDrawReceiver);
+            await Clients.GroupExcept(gameId, [caller.ConnectionId, receiver.ConnectionId]).SendAsync("GameOver", observersResult);
+
             _gameService.SetGameStatusToEnded(gameId);
         }
 
         public async Task SendDrawRequest(string gameId)
         {
-            await Clients.OthersInGroup(gameId).SendAsync("DrawRequest");
+            try
+            {
+                var game = _gameService.GetGame(gameId) ?? throw new GameNotFoundException(gameId);
+                var receiver = Context.ConnectionId == game.PlayerWhite?.ConnectionId ? game.PlayerBlack : game.PlayerWhite;
+
+                await Clients.Client(receiver.ConnectionId).SendAsync("DrawRequest");
+            }
+            catch (GameNotFoundException)
+            {
+                await Clients.Caller.SendAsync("GameNotFound", gameId);
+                return;
+            }
+
         }
 
         public async Task AcceptDrawRequest(string gameId)
         {
-            await Clients.OthersInGroup(gameId).SendAsync("AcceptDraw");
+            var resultDraw = new GameResult { Result = "Tie!", Reason = "Players agreed to a draw!" };
+            await Clients.Group(gameId).SendAsync("GameOver", resultDraw);
+
             _gameService.SetGameStatusToEnded(gameId);
         }
 
-        public async Task DeclineDrawRequest(string gameId)
+        public async Task DeclineDrawRequest(string gameId) //To chyba w ogóle bez sensu, ponieważ nic nie wnosi... (ale zostawię)
         {
             await Clients.OthersInGroup(gameId).SendAsync("DeclineDraw");
         }
 
         public async Task ResignGame(string gameId)
         {
-            await Clients.OthersInGroup(gameId).SendAsync("Resign");
-            _gameService.SetGameStatusToEnded(gameId);
+            try
+            {
+                var game = _gameService.GetGame(gameId) ?? throw new GameNotFoundException(gameId);
+
+                var caller = Context.ConnectionId == game.PlayerWhite?.ConnectionId ? game.PlayerWhite : game.PlayerBlack;
+                var receiver = Context.ConnectionId == game.PlayerWhite?.ConnectionId ? game.PlayerBlack : game.PlayerWhite;
+
+                var playerLostResult = new GameResult { Result = "You lost.", Reason = "Lost by resign." };
+                var playerWonResult = new GameResult { Result = "You won!", Reason = "Enemy resigned!" };
+
+                var observersResult = new GameResult { Result = $"Player {receiver?.PlayerName} won!", Reason = "Enemy resigned!" };
+
+                await Clients.Client(caller.ConnectionId).SendAsync("GameOver", playerLostResult);
+                await Clients.Client(receiver.ConnectionId).SendAsync("GameOver", playerWonResult);
+                await Clients.GroupExcept(gameId, [caller.ConnectionId, receiver.ConnectionId]).SendAsync("GameOver", observersResult);
+                _gameService.SetGameStatusToEnded(gameId);
+            }
+            catch (GameNotFoundException)
+            {
+                await Clients.Caller.SendAsync("GameNotFound", gameId);
+                return;
+            }
         }
     }
 }
