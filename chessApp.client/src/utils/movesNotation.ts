@@ -5,53 +5,51 @@ import { changeDigitsToLetter } from "./board";
 export function generateChessNotation(
   move: Move,
   squares: Square[],
+  isPromotion: boolean,
   isCheck: boolean,
   isCheckmate: boolean,
-  isPat: boolean
+  isTie: boolean
 ): string {
-  const pieceSymbol = getPieceSymbol(move.piece.src);
+  const pieceSymbol = isPromotion ? "" : getPieceSymbol(move.piece.pieceType); 
   const targetRow = `${move.to.row}`;
   const targetColumn = `${changeDigitsToLetter(move.to.column).toLowerCase()}`;
   const targetSquare = targetColumn + targetRow;
-  const capture = squares.find(
+
+  const isCapture = squares.some(
     (square) =>
       square.position.row === move.to.row &&
       square.position.column === move.to.column &&
       square.piece !== null
   );
-  const captureSymbol = capture ? "x" : "";
-  const fromColumn = `${changeDigitsToLetter(move.from.column)}`;
+  
+  const fromColumn = changeDigitsToLetter(move.from.column).toLowerCase();
 
-  // Specjalne przypadki
+  // Roszada
   if (pieceSymbol === "K" && Math.abs(move.from.column - move.to.column) > 1) {
     return move.to.column === 7 ? "O-O" : "O-O-O";
   }
 
-  return `${pieceSymbol}${
-    captureSymbol === "x"
-      ? pieceSymbol === ""
-        ? fromColumn.toLowerCase() + captureSymbol
-        : captureSymbol
-      : ""
-  }${targetSquare}${isCheckmate ? "#" : isCheck ? "+" : isPat ? "=" : ""}`;
+  return (
+    `${pieceSymbol}${isCapture ? (pieceSymbol === "" ? fromColumn : "") + "x" : ""}` +
+    `${targetSquare}` +
+    `${isPromotion ? "=Q" : ""}` +
+    `${isCheckmate ? "#" : isCheck ? "+" : ""}` +
+    `${isTie ? "=" : ""}`
+  );
+  
 }
 
-function getPieceSymbol(pieceSrc: string): string {
-  switch (pieceSrc) {
-    case "wk.png":
-    case "bk.png":
+function getPieceSymbol(pieceType: string): string {
+  switch (pieceType) {
+    case "king":
       return "K";
-    case "wq.png":
-    case "bq.png":
+    case "queen":
       return "Q";
-    case "wr.png":
-    case "br.png":
+    case "rook":
       return "R";
-    case "wb.png":
-    case "bb.png":
+    case "bishop":
       return "B";
-    case "wn.png":
-    case "bn.png":
+    case "knight":
       return "N";
     default:
       return "";

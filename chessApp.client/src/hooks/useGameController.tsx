@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import GameService from "../services/GameService.ts";
-import { movePiece } from "../store/boardReducer.ts";
+import { movePiece, promoteToQueen, reverseBoard } from "../store/boardReducer.ts";
 import { addMove } from "../store/moveHistoryReducer.ts";
 import { addPiece } from "../store/takenPiecesReducer.ts";
 import { Move } from "../types/Move";
@@ -80,6 +80,12 @@ export default function useGameController() {
 
     dispatch(movePiece(move));
 
+    const isPromotion = moveValidator.isPromotion(move);
+
+    if (isPromotion) {
+      dispatch(promoteToQueen(move));
+    }
+
     const isCheck = moveValidator.isPlayerInCheck(move);
     const isCheckmate = moveValidator.isPlayerInMat(move);
     const isPat = moveValidator.isPlayerInPat(move);
@@ -87,6 +93,7 @@ export default function useGameController() {
     const notation = generateChessNotation(
       move,
       moveValidator.squares,
+      isPromotion,
       isCheck,
       isCheckmate,
       isPat
@@ -100,9 +107,11 @@ export default function useGameController() {
     const turn = {
       player: player.current, 
       move: move,
+      isPromotion: isPromotion,
       isCheckmate: isCheckmate,
       isPat: isPat,
     } as GameTurn
+
     GameService.makeTurn(turn);
 
     drawRequest.setCanAcceptDraw(false);
@@ -123,6 +132,11 @@ export default function useGameController() {
 
     if (turn.player.connectionId !== player.current?.connectionId){
       dispatch(movePiece(turn.move));
+
+      if (turn.isPromotion) {
+        dispatch(promoteToQueen(turn.move));
+      }
+
       setIfPlayerCanMove(true);
     }
 
@@ -173,5 +187,6 @@ export default function useGameController() {
     handleTimeRunOut,
     onClickResignGame,
     onClickAcceptDrawRequest,
+    onClickRotateBoardForObserver,
   }
 }

@@ -27,13 +27,6 @@ const boardSlice = createSlice({
     },
     movePiece(state, action: PayloadAction<Move>) {
       const move = action.payload;
-      //Promocja
-      if (move.piece.pieceType === "pawn" && move.piece.color === "white" && move.to.row === 8) {
-        move.piece = { src: "wq.png", pieceType: "queen", color: "white"} as Piece;
-      } else if (move.piece.pieceType === "pawn" && move.piece.color === "black" && move.to.row === 1) {
-        move.piece = { src: "bq.png", pieceType: "queen", color: "black"} as Piece;
-      }
-
       state.squares = state.squares.map((square) => {
         //Dodanie figury
         if (
@@ -53,10 +46,39 @@ const boardSlice = createSlice({
         return square;
       });
     },
+
+    promoteToQueen(state, action: PayloadAction<Move>){
+      const move = action.payload;
+      
+      console.log("pomoting to queen: ", move);
+
+      if (move.piece.pieceType === "pawn" && move.piece.color === "white" && move.to.row === 8) {
+        move.piece = { src: "wq.png", pieceType: "queen", color: "white"} as Piece;
+      } else if (move.piece.pieceType === "pawn" && move.piece.color === "black" && move.to.row === 1) {
+        move.piece = { src: "bq.png", pieceType: "queen", color: "black"} as Piece;
+      }
+
+      state.squares = state.squares.map((square) => {
+        if (
+          square.position.row === move.to.row &&
+          square.position.column === move.to.column
+        ) {
+          return { ...square, piece: move.piece };
+        }
+        if (
+          square.position.row === move.from.row &&
+          square.position.column === move.from.column
+        ) {
+          return { ...square, piece: null };
+        }
+    
+        return square;
+      });
+    }
   },
 });
 
-export const { setupBoard, movePiece, reverseBoard, clearBoard } =
+export const { setupBoard, movePiece, promoteToQueen, reverseBoard, clearBoard } =
   boardSlice.actions;
 export default boardSlice.reducer;
 

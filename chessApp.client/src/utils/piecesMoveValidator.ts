@@ -1,7 +1,7 @@
 import { Coordinate } from "../types/Coordinate.ts";
 import { Move } from "../types/Move.ts";
 import { Square } from "../types/Square.ts";
-import { simulateSquaresAfterMove } from "../utils/simulateSquares.ts";
+import { simulateSquaresAfterMove } from "./simulateSquares.ts";
 
 function checkIfPlayersMoveIsCorrect(move: Move, squares: Square[]){
     if (move.from.column === move.to.column && move.from.row === move.to.row) return false; //Jeśli ruch jest na to samo pole.
@@ -293,6 +293,15 @@ function checkIfPawnCanTake(move: Move, squares: Square[]){
     return false;
 }
 
+function checkIfPieceIsPromoting(move: Move){
+    if (move.piece.color === "white" && move.piece.pieceType === "pawn"){
+        return move.to.row === 8;
+    } else if(move.piece.color === "black" && move.piece.pieceType === "pawn"){
+        return move.to.row === 1;
+    }
+    return false;
+}
+
 function checkRook(move: Move, squares: Square[]){
 
     if (move.from.row !== move.to.row && move.from.column !== move.to.column) {
@@ -435,4 +444,10 @@ function checkIfEnemiesKingIsInRange(move: Move, squares: Square[]){
     return false;
 }
 
-export { checkIfPlayersMoveIsCorrect, checkIfPlayerWillBeCheckmated, checkIfPlayerWillBeInPat, checkIfPlayerWillBeInCheck};
+export { 
+    checkIfPlayersMoveIsCorrect, 
+    checkIfPlayerWillBeCheckmated, 
+    checkIfPlayerWillBeInPat, 
+    checkIfPlayerWillBeInCheck, 
+    checkIfPieceIsPromoting
+};
