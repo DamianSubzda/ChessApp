@@ -13,12 +13,24 @@
 .game-page__left {
     height: calc($square-size * 8);
     display: grid;
-    grid-template-rows: 1fr auto auto 1fr;
+    grid-template-rows: 1fr 20fr auto auto 20fr 1fr;
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 0.5rem;
     justify-content: end;
     justify-items: end;
     width: 100%;
+
+    .display-name {
+        background-color: yellow;
+        .display-name--enemy{
+            background-color: blue;
+        }
+
+        .display-name--player{
+            background-color: red;
+        }
+    }
+
 }
 
 .game-page__right {
@@ -37,15 +49,17 @@
     display: flex;
     justify-content: end;
     padding-top: 5px;
+
+    .taken-pieces--enemy{
+        align-items: start;
+    }
+    
+    .taken-pieces--player{
+        align-items: end;
+    }
 }
 
-.taken-pieces--enemy{
-    align-items: start;
-}
 
-.taken-pieces--player{
-    align-items: end;
-}
 
 .timer{
     background-color: grey;

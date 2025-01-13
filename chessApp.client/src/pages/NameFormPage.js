@@ -1,4 +1,4 @@
-import NameForm from "../components/UI/NameForm";
+import NameForm from "../components/forms/NameForm";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./NameFormPage.scss"
 

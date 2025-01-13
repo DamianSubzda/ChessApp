@@ -1,7 +1,7 @@
 import { Move } from "./../types/Move";
 import { Square } from "./../types/Square";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { changeDigitsToLetter } from "../utils/board";
+import { changeDigitsToLetter } from "../utils/board.ts";
 import { Piece } from "../types/Piece";
 
 const boardSlice = createSlice({

@@ -1,4 +1,4 @@
-import { GameResult } from "../../types/GameResult";
+import { GameResult } from "../../../types/GameResult.ts";
 import "./Result.scss"
 
 import React from "react";

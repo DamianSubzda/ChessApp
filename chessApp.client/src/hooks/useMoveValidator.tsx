@@ -5,7 +5,7 @@ import {
   checkIfPlayerWillBeInPat,
   checkIfPlayerWillBeInCheck,
   checkIfPieceIsPromoting,
-} from "../utils/PiecesMove.ts";
+} from "../utils/piecesMoveValidator.ts";
 import { AppState } from "../store/store.ts";
 import { Move } from "../types/Move.ts";
 import { useRef, useEffect } from "react";

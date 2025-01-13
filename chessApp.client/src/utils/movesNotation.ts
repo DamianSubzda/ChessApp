@@ -1,6 +1,6 @@
 import { Move } from "../types/Move";
 import { Square } from "../types/Square";
-import { changeDigitsToLetter } from "./board";
+import { changeDigitsToLetter } from "./board.ts";
 
 export function generateChessNotation(
   move: Move,

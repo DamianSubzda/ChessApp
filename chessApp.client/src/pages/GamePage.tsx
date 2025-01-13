@@ -6,14 +6,8 @@ import { useDispatch, useSelector } from "react-redux";
 import useGameValidator from "../hooks/useGameValidator.tsx";
 import useGameController from "../hooks/useGameController.tsx";
 
-import Chessboard from "../components/board/Chessboard.tsx";
-import Timer from "../components/timer/Timer.tsx";
-import MovesHistory from "../components/moves-history/MovesHistory.tsx";
-import Result from "../components/board/Result.tsx";
-import ResignIcon from "../components/icons/ResignIcon.tsx";
-import DrawRequestIcon from "../components/icons/DrawRequestIcon.tsx";
-import TakenPieces from "../components/taken-pieces/TakenPieces.tsx";
-import DrawRequestPopup from "../components/drawRequestPopup/DrawRequestPopup .tsx";
+import Chessboard from "../components/game/board/Chessboard.tsx";
+import Result from "../components/game/board/Result.tsx";
 
 import type { AppState } from "../store/store.ts";
 
@@ -21,6 +15,8 @@ import GameService from "../services/GameService.ts";
 
 import { clearMoves } from "../store/moveHistoryReducer.ts";
 import { clearPieces } from "../store/takenPiecesReducer.ts";
+import GameInfoLeft from "../components/game/game-info/GameInfoLeft.tsx";
+import GameInfoRight from "../components/game/game-info/GameInfoRight.tsx";
 
 function GamePage() {
   const { gameId } = useParams();
@@ -88,70 +84,16 @@ function GamePage() {
   return (
     <div className="game-page">
       <Result result={gameController.gameOver.gameResult} />
-      <div className="game-page__left">
-        <div className="taken-pieces taken-pieces--enemy">
-          <TakenPieces
-            groupedPieces={
-              gameController.player.current?.color === "white"
-                ? takenPieces.whiteGroupedPieces
-                : takenPieces.blackGroupedPieces
-            }
-          />
-        </div>
-        <Timer
-          className="timer"
-          time={gameController.player.current?.color === "white" ? gameController.blackTimer.time : gameController.whiteTimer.time}
-          onTimeRunOut={() => {}}
-          onTimeChange={gameController.player.current?.color === "white" ? gameController.blackTimer.handleTimeChange : gameController.whiteTimer.handleTimeChange}
-          isTimerRunning={gameController.player.current?.color === "white" ? gameController.blackTimer.isRunning : gameController.whiteTimer.isRunning}
-        />
-        <Timer
-          className="timer"
-          time={gameController.player.current?.color === "white" ? gameController.whiteTimer.time : gameController.blackTimer.time}
-          onTimeRunOut={gameController.handleTimeRunOut}
-          onTimeChange={gameController.player.current?.color === "white" ? gameController.whiteTimer.handleTimeChange : gameController.blackTimer.handleTimeChange}
-          isTimerRunning={gameController.player.current?.color === "white" ? gameController.whiteTimer.isRunning : gameController.blackTimer.isRunning}
-        />
-        <div className="taken-pieces taken-pieces--player">
-          <TakenPieces
-            groupedPieces={
-              gameController.player.current?.color !== "white"
-                ? takenPieces.whiteGroupedPieces
-                : takenPieces.blackGroupedPieces
-            }
-          />
-        </div>
-      </div>
+      
+      <GameInfoLeft gameController={gameController} takenPieces={takenPieces} />
 
       <Chessboard
-        isPlayerWhite={gameController.player.current?.color === "white"}
+        colorOfPOV={gameController.player.current?.color}
         makeMove={gameController.handleMakeTurn}
       />
-      <div className="game-page__right">
-        <MovesHistory />
-        <div className="game-page__right__buttons">
-          {gameController.drawRequest.canAcceptDraw && (
-            <DrawRequestPopup
-              handleAcceptedDraw={gameController.onClickAcceptDrawRequest}
-              handleDeclinedDraw={gameController.drawRequest.declineDrawRequest}
-            />
-          )}
-          {gameController.userRole.current === "player" &&
-            <>
-              <button onClick={gameController.onClickResignGame}>
-                <ResignIcon size={32} />
-              </button>
-              <button
-                onClick={gameController.drawRequest.sendDrawRequest}
-                ref={gameController.drawRequest.setButtonRef}
-              >
-                <DrawRequestIcon size={32} />
-              </button>
-            </>
-          }
-          
-        </div>
-      </div>
+      
+      <GameInfoRight gameController={gameController} />
+
     </div>
   );
 }

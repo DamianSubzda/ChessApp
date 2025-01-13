@@ -1,8 +1,8 @@
 import "./Square.scss";
-import { changeDigitsToLetter } from "../../utils/board";
+import { changeDigitsToLetter } from "../../../utils/board.ts";
 import { useRef } from "react";
 import { memo } from "react";
-import type { Square } from "../../types/Square";
+import type { Square } from "../../../types/Square";
 import React from "react";
 
 interface SquareProps {

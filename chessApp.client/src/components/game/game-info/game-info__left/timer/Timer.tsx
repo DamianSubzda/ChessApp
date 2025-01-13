@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import "./Timer.scss"
 import React from "react";
-import ClockIcon from "../icons/ClockIcon.tsx";
+import ClockIcon from "../../../../icons/ClockIcon.tsx";
 
 interface TimerProps {
     className?: string,
