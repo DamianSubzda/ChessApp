@@ -1,4 +1,5 @@
-function changeDigitsToLetter(digit){
+
+function changeDigitsToLetter(digit: number): string{
     return String.fromCharCode(64 + digit);
 }
 
