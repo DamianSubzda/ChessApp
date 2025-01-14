@@ -30,20 +30,11 @@ export default function useGameController() {
   const userRole = useRef<string>("observer");
   const player = useRef<Player | null>(null);
   const [isPlayerMove, setIfPlayerCanMove] = useState<boolean>(false);
+  const [isBoardRotated, setIfBoardIsRotated] = useState<boolean>(false);
   
   const handlePlayerJoin = (playerData: Player) => {
     player.current = playerData;
     userRole.current = "player";
-  };
-
-  const handleGameStart = (game: Game) => {
-    if (game.playerWhite && game.playerBlack){
-      whiteTimer.handleTimeChange(game.playerWhite.timeLeft);
-      blackTimer.handleTimeChange(game.playerBlack.timeLeft);
-    }
-
-    setIfPlayerCanMove(player.current?.color === "white");
-    localStorage.setItem("Game", JSON.stringify(game));
   };
 
   const handleJoinedAsObserver = (game: Game) => {
@@ -55,8 +46,18 @@ export default function useGameController() {
     game.turns.forEach((turn) => {
       handleTurn(turn);
     });    
-
+    
     userRole.current = "observer";
+  };
+
+  const handleGameStart = (game: Game) => {
+    if (game.playerWhite && game.playerBlack){
+      whiteTimer.handleTimeChange(game.playerWhite.timeLeft);
+      blackTimer.handleTimeChange(game.playerBlack.timeLeft);
+    }
+
+    setIfPlayerCanMove(player.current?.color === "white");
+    localStorage.setItem("Game", JSON.stringify(game));
   };
 
   const handleMakeTurn = async (square: Square, target: any) => {
@@ -77,7 +78,7 @@ export default function useGameController() {
         (sq) => sq.position.column === move.to.column && sq.position.row === move.to.row
       )?.piece ?? null;
     move.takenPiece = takenPiece;
-
+   
     dispatch(movePiece(move));
 
     const isPromotion = moveValidator.isPromotion(move);
@@ -89,7 +90,7 @@ export default function useGameController() {
     const isCheck = moveValidator.isPlayerInCheck(move);
     const isCheckmate = moveValidator.isPlayerInMat(move);
     const isPat = moveValidator.isPlayerInPat(move);
-
+    
     const notation = generateChessNotation(
       move,
       moveValidator.squares,
@@ -110,7 +111,7 @@ export default function useGameController() {
       isPromotion: isPromotion,
       isCheckmate: isCheckmate,
       isPat: isPat,
-    } as GameTurn
+      } as GameTurn
 
     GameService.makeTurn(turn);
 
@@ -163,6 +164,10 @@ export default function useGameController() {
     drawRequest.acceptDrawRequest();
   };
 
+  const onClickRotateBoardForObserver =() => {
+    setIfBoardIsRotated(!isBoardRotated);
+  }
+
   const handleGameOver = (result: GameResult) => {
     gameOver.handleGameOver(result);
     drawRequest.setCanAcceptDraw(false);
@@ -178,6 +183,7 @@ export default function useGameController() {
     blackTimer,
     player,
     userRole,
+    isBoardRotated,
     handlePlayerJoin,
     handleGameStart,
     handleJoinedAsObserver,
@@ -190,3 +196,5 @@ export default function useGameController() {
     onClickRotateBoardForObserver,
   }
 }
+
+export type GameControllerType = ReturnType<typeof useGameController>;

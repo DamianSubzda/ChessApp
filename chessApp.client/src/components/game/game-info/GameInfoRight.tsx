@@ -4,7 +4,13 @@ import ResignIcon from "../../icons/ResignIcon.tsx";
 import DrawRequestPopup from "./game-info__right/drawRequestPopup/DrawRequestPopup.tsx";
 import MovesHistory from "./game-info__right/moves-history/MovesHistory.tsx";
 
-function GameInfoRight({ gameController }) {
+import { GameControllerType } from "./../../../hooks/useGameController.tsx"
+
+interface GameInfoRightPlayerProps {
+  gameController: GameControllerType
+}
+
+function GameInfoRight({ gameController }: GameInfoRightPlayerProps) {
   return (
     <div className="game-page__right">
         <MovesHistory />
