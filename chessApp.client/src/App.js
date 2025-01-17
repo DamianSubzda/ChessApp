@@ -11,17 +11,24 @@ import "./App.css"
 
 function App() {
   return (
-    <>
-      <Navbar />
-      <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="new-game" element={<CreateGame />} />
-          <Route path="game/:gameId" element={<GamePage />} />
-          <Route path="lobby" element={<LobbyPage />} />
-          <Route path="player-name" element={<NameFormPage path={"/"}/>} />
-          <Route path="*" element={<PageNotFound />} />
-      </Routes>
-    </>
+    <Routes>
+      <Route
+        path="*"
+        element={
+          <>
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="new-game" element={<CreateGame />} />
+              <Route path="game/:gameId" element={<GamePage />} />
+              <Route path="lobby" element={<LobbyPage />} />
+              <Route path="player-name" element={<NameFormPage />} />
+              <Route path="*" element={<PageNotFound />} />
+            </Routes>
+          </>
+        }
+      />
+    </Routes>
   );
 }
 

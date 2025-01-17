@@ -49,8 +49,6 @@ const boardSlice = createSlice({
 
     promoteToQueen(state, action: PayloadAction<Move>){
       const move = action.payload;
-      
-      console.log("pomoting to queen: ", move);
 
       if (move.piece.pieceType === "pawn" && move.piece.color === "white" && move.to.row === 8) {
         move.piece = { src: "wq.png", pieceType: "queen", color: "white"} as Piece;

@@ -1,0 +1,47 @@
+@import "./../../../styles/variables.scss";
+
+.game-page__left {
+    height: calc($square-size * 8);
+    display: grid;
+    grid-template-rows: 1fr 20fr auto auto 20fr 1fr;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    justify-content: end;
+    justify-items: end;
+    width: 100%;
+
+    .taken-pieces{
+        box-sizing: border-box;
+        width: 100%;
+        display: flex;
+        justify-content: end;
+        padding-top: 5px;
+    
+        .taken-pieces--enemy{
+            align-items: start;
+        }
+        
+        .taken-pieces--player{
+            align-items: end;
+        }
+    }
+    
+    .timer{
+        border: 2px solid black;
+        align-items: center;
+        justify-content: center;
+        display: flex;
+    }
+
+    .display-name {
+        background-color: yellow;
+        .display-name--enemy{
+            background-color: blue;
+        }
+
+        .display-name--player{
+            background-color: red;
+        }
+    }
+
+}

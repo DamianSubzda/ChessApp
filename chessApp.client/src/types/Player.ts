@@ -4,4 +4,5 @@ export type Player = {
     connectionId: string;
     color: "white" | "black";
     timeLeft: number;
+    role: "player" | "observer"
 }

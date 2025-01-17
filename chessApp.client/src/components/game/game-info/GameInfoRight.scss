@@ -1,0 +1,15 @@
+@import "./../../../styles/variables.scss";
+
+.game-page__right {
+    height: calc($square-size * 8);
+    align-items: baseline;
+    display: grid;
+    grid-template-rows: minmax(0, 15fr) auto;
+    width: 90%;
+    overflow: hidden;
+    gap: 1rem;
+    
+    .game-page__right__buttons {
+        position: relative;
+    }
+}

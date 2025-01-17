@@ -1,6 +1,7 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState,  } from "react";
 import GameService from "../services/GameService.ts";
 import { movePiece, promoteToQueen, reverseBoard } from "../store/boardReducer.ts";
+import { setGame } from "../store/gameReducer.ts";
 import { addMove } from "../store/moveHistoryReducer.ts";
 import { addPiece } from "../store/takenPiecesReducer.ts";
 import { Move } from "../types/Move";
@@ -19,52 +20,52 @@ import { GameTurn } from "../types/GameTurn.ts";
 import { GameResult } from "../types/GameResult.ts";
 
 export default function useGameController() {
+  const dispatch = useDispatch();
+  const player = useRef<Player | null>(null);
+  const observer = useRef<Player | null>(null);
+
   const whiteTimer = useTimer(0);
   const blackTimer = useTimer(0);
   const moveValidator = useMoveValidator();
   const gameOver = useGameOver();
   const drawRequest = useDrawRequest(gameOver.gameResult);
 
-  const dispatch = useDispatch();
-
-  const userRole = useRef<string>("observer");
-  const player = useRef<Player | null>(null);
   const [isPlayerMove, setIfPlayerCanMove] = useState<boolean>(false);
-  const [isBoardRotated, setIfBoardIsRotated] = useState<boolean>(false);
-  
+
   const handlePlayerJoin = (playerData: Player) => {
     player.current = playerData;
-    userRole.current = "player";
   };
 
-  const handleJoinedAsObserver = (game: Game) => {
-    if (game.playerWhite && game.playerBlack){
-      whiteTimer.handleTimeChange(game.playerWhite.timeLeft);
-      blackTimer.handleTimeChange(game.playerBlack.timeLeft);
-    }
+  const handleJoinedAsObserver = (game: Game, playerData: Player) => {
+    observer.current = playerData;
+    dispatch(setGame(game));
+    setTimers(game);
 
     game.turns.forEach((turn) => {
       handleTurn(turn);
-    });    
-    
-    userRole.current = "observer";
+    });
   };
 
   const handleGameStart = (game: Game) => {
+    dispatch(setGame(game));
+    setTimers(game);
+  };
+
+  const setTimers = (game: Game) => {
     if (game.playerWhite && game.playerBlack){
       whiteTimer.handleTimeChange(game.playerWhite.timeLeft);
       blackTimer.handleTimeChange(game.playerBlack.timeLeft);
     }
+  }
 
+  useEffect(() => {
     setIfPlayerCanMove(player.current?.color === "white");
-    localStorage.setItem("Game", JSON.stringify(game));
-  };
+  }, [player.current?.color]);
 
   const handleMakeTurn = async (square: Square, target: any) => {
-    if (userRole.current !== "player" || !isPlayerMove) return;
-    if (square.piece?.color !== player.current?.color)
-      return;
-    
+    if (player.current === null || !isPlayerMove) return;
+    if (square.piece?.color !== player.current?.color) return;
+
     const move = {
       from: { row: square.position.row, column: square.position.column } as Coordinate,
       to: { row: target.row, column: target.column } as Coordinate,
@@ -78,7 +79,7 @@ export default function useGameController() {
         (sq) => sq.position.column === move.to.column && sq.position.row === move.to.row
       )?.piece ?? null;
     move.takenPiece = takenPiece;
-   
+
     dispatch(movePiece(move));
 
     const isPromotion = moveValidator.isPromotion(move);
@@ -90,7 +91,7 @@ export default function useGameController() {
     const isCheck = moveValidator.isPlayerInCheck(move);
     const isCheckmate = moveValidator.isPlayerInMat(move);
     const isPat = moveValidator.isPlayerInPat(move);
-    
+
     const notation = generateChessNotation(
       move,
       moveValidator.squares,
@@ -101,12 +102,11 @@ export default function useGameController() {
     );
     move.notation = notation;
 
-    if (player.current) {
-      player.current.timeLeft = player.current.color === "white" ? whiteTimer.timeRef.current : blackTimer.timeRef.current;
-    }
-    
+    const timeLeft = player.current.color === "white" ? whiteTimer.timeRef.current : blackTimer.timeRef.current;
+    player.current.timeLeft = timeLeft;
+
     const turn = {
-      player: player.current, 
+      player: player.current,
       move: move,
       isPromotion: isPromotion,
       isCheckmate: isCheckmate,
@@ -117,7 +117,6 @@ export default function useGameController() {
 
     drawRequest.setCanAcceptDraw(false);
     setIfPlayerCanMove(false);
-
   };
 
   const handleTurn = (turn: GameTurn) => {
@@ -130,7 +129,6 @@ export default function useGameController() {
       blackTimer.handleTimeChange(turn.player.timeLeft);
       whiteTimer.startTimer();
     }
-
     if (turn.player.connectionId !== player.current?.connectionId){
       dispatch(movePiece(turn.move));
 
@@ -151,12 +149,12 @@ export default function useGameController() {
   };
 
   const handleTimeRunOut = async () => {
-    if (gameOver.gameResult !== null || userRole.current !== "player") return;
+    if (gameOver.hasHandledGameOver.current || player.current === null) return;
     GameService.timeRunOut();
   };
 
-  const onClickResignGame = async () => { 
-    if (gameOver.gameResult !== null || userRole.current !== "player") return;
+  const onClickResignGame = async () => {
+    if (gameOver.hasHandledGameOver.current || player.current === null) return;
     GameService.resignGame();
   };
 
@@ -165,7 +163,14 @@ export default function useGameController() {
   };
 
   const onClickRotateBoardForObserver =() => {
-    setIfBoardIsRotated(!isBoardRotated);
+    if (observer.current) {
+      const updatedObserver = {
+        ...observer.current,
+        color: observer.current.color === "white" ? "black" : "white",
+      } as Player;
+      observer.current = updatedObserver;
+    }
+    dispatch(reverseBoard());
   }
 
   const handleGameOver = (result: GameResult) => {
@@ -182,8 +187,7 @@ export default function useGameController() {
     whiteTimer,
     blackTimer,
     player,
-    userRole,
-    isBoardRotated,
+    observer,
     handlePlayerJoin,
     handleGameStart,
     handleJoinedAsObserver,

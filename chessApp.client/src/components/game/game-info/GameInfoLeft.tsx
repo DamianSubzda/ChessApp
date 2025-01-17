@@ -4,6 +4,8 @@ import Timer from "./game-info__left/timer/Timer.tsx";
 import { GameControllerType } from "../../../hooks/useGameController.tsx";
 import { AppState } from "../../../store/store.ts";
 import { useSelector } from "react-redux";
+import PlayerName from "./game-info__left/PlayerName.tsx";
+import "./GameInfoLeft.scss";
 
 interface GameInfoLeftPlayerProps {
   gameController: GameControllerType;
@@ -11,65 +13,45 @@ interface GameInfoLeftPlayerProps {
 
 function GameInfoLeft({ gameController }: GameInfoLeftPlayerProps) {
   const takenPieces = useSelector((state: AppState) => state.takenPieces);
+  const game = useSelector((state: AppState) => state.game);
 
-  const isRotated = gameController.isBoardRotated;
-  const playerColor = gameController.player.current?.color;
+  const playerColor = gameController.player.current
+    ? gameController.player.current?.color
+    : gameController.observer.current?.color;
 
-  // Zmienna kontrolująca widok przeciwnika i gracza
-  const playerName = isRotated
-    ? playerColor === "white"
-      ? "Enemy name"
-      : "Player name"
-    : playerColor === "white"
-    ? "Player name"
-    : "Enemy name";
+  const playerName =
+    playerColor === "white"
+      ? game.game?.playerWhite?.playerName
+      : game.game?.playerBlack?.playerName;
 
-  const enemyName = isRotated
-    ? playerColor === "white"
-      ? "Player name"
-      : "Enemy name"
-    : playerColor === "white"
-    ? "Enemy name"
-    : "Player name";
+  const enemyName =
+    playerColor === "black"
+      ? game.game?.playerWhite?.playerName
+      : game.game?.playerBlack?.playerName;
 
-  // Zmienna kontrolująca zbite figury
-  const playerTakenPieces = isRotated
-    ? playerColor === "white"
+  const playerTakenPieces =
+    playerColor === "white"
       ? takenPieces.blackGroupedPieces
-      : takenPieces.whiteGroupedPieces
-    : playerColor === "white"
-    ? takenPieces.whiteGroupedPieces
-    : takenPieces.blackGroupedPieces;
+      : takenPieces.whiteGroupedPieces;
 
-  const enemyTakenPieces = isRotated
-    ? playerColor === "white"
+  const enemyTakenPieces =
+    playerColor === "white"
       ? takenPieces.whiteGroupedPieces
-      : takenPieces.blackGroupedPieces
-    : playerColor === "white"
-    ? takenPieces.blackGroupedPieces
-    : takenPieces.whiteGroupedPieces;
+      : takenPieces.blackGroupedPieces;
 
-  // Timer gracza
-  const playerTimer = isRotated
-    ? playerColor === "white"
-      ? gameController.blackTimer
-      : gameController.whiteTimer
-    : playerColor === "white"
-    ? gameController.whiteTimer
-    : gameController.blackTimer;
-
-  // Timer przeciwnika
-  const enemyTimer = isRotated
-    ? playerColor === "white"
+  const playerTimer =
+    playerColor === "white"
       ? gameController.whiteTimer
-      : gameController.blackTimer
-    : playerColor === "white"
-    ? gameController.blackTimer
-    : gameController.whiteTimer;
+      : gameController.blackTimer;
+
+  const enemyTimer =
+    playerColor === "white"
+      ? gameController.blackTimer
+      : gameController.whiteTimer;
 
   return (
     <div className="game-page__left">
-      <div className="display-name display-name--enemy">{enemyName}</div>
+      <PlayerName name={enemyName} />
       <div className="taken-pieces taken-pieces--enemy">
         <TakenPieces groupedPieces={enemyTakenPieces} />
       </div>
@@ -90,7 +72,7 @@ function GameInfoLeft({ gameController }: GameInfoLeftPlayerProps) {
       <div className="taken-pieces taken-pieces--player">
         <TakenPieces groupedPieces={playerTakenPieces} />
       </div>
-      <div className="display-name display-name--player">{playerName}</div>
+      <PlayerName name={playerName} />
     </div>
   );
 }

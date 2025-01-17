@@ -6,11 +6,14 @@ import MovesHistory from "./game-info__right/moves-history/MovesHistory.tsx";
 
 import { GameControllerType } from "./../../../hooks/useGameController.tsx"
 
+import "./GameInfoRight.scss"
+
 interface GameInfoRightPlayerProps {
   gameController: GameControllerType
 }
 
 function GameInfoRight({ gameController }: GameInfoRightPlayerProps) {
+
   return (
     <div className="game-page__right">
         <MovesHistory />
@@ -21,7 +24,7 @@ function GameInfoRight({ gameController }: GameInfoRightPlayerProps) {
               handleDeclinedDraw={gameController.drawRequest.declineDrawRequest}
             />
           )}
-          {gameController.userRole.current === "player" ?
+          {gameController.player.current?.role === "player" ?
             <>
               <button onClick={gameController.onClickResignGame}>
                 <ResignIcon size={32} />

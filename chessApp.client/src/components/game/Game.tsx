@@ -30,8 +30,8 @@ function Game() {
     const handleBeforeUnload = () => {
       if (
         gameId &&
-        gameController.gameOver.gameResult === null &&
-        gameController.userRole.current === "player"
+        !gameController.gameOver.hasHandledGameOver.current &&
+        gameController.player.current?.role === "player"
       ) {
         GameService.leaveGame();
       }
@@ -71,8 +71,8 @@ function Game() {
       const cleanup = async () => {
         if (
           gameId &&
-          gameController.gameOver.gameResult === null &&
-          gameController.userRole.current === "player"
+          !gameController.gameOver.hasHandledGameOver.current &&
+          gameController.player.current?.role === "player"
         ) {
           await GameService.leaveGame();
         }
@@ -91,8 +91,7 @@ function Game() {
       <Result result={gameController.gameOver.gameResult} />
       <GameInfoLeft gameController={gameController} />
       <Chessboard
-        color={gameController.player.current?.color}
-        isRotated={gameController.isBoardRotated}
+        player={gameController.player.current}
         makeMove={gameController.handleMakeTurn}
       />
       <GameInfoRightPlayer gameController={gameController} />

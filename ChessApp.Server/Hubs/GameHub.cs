@@ -42,7 +42,8 @@ namespace ChessApp.Server.Hubs
                         ConnectionId = Context.ConnectionId,
                         PlayerName = playerName,
                         Color = isPlayerWhite ? "white" : "black",
-                        TimeLeft = GameTypeUtil.GetGameTimeForGameType(game.Type)
+                        TimeLeft = GameTypeUtil.GetGameTimeForGameType(game.Type),
+                        Role = "player"
                     };
 
                     if (isPlayerWhite)
@@ -64,7 +65,8 @@ namespace ChessApp.Server.Hubs
                         PlayerName = playerName,
                         ConnectionId = Context.ConnectionId,
                         Color = "white",
-                        TimeLeft = GameTypeUtil.GetGameTimeForGameType(game.Type)
+                        TimeLeft = GameTypeUtil.GetGameTimeForGameType(game.Type),
+                        Role = "player"
                     };
                     game.PlayerWhite = player;
 
@@ -79,7 +81,8 @@ namespace ChessApp.Server.Hubs
                         PlayerName = playerName,
                         ConnectionId = Context.ConnectionId,
                         Color = "black",
-                        TimeLeft = GameTypeUtil.GetGameTimeForGameType(game.Type)
+                        TimeLeft = GameTypeUtil.GetGameTimeForGameType(game.Type),
+                        Role = "player"
                     };
                     game.PlayerBlack = player;
 
@@ -89,8 +92,17 @@ namespace ChessApp.Server.Hubs
                 }
                 else
                 {
+                    var player = new Player
+                    {
+                        PlayerName = playerName,
+                        ConnectionId = Context.ConnectionId,
+                        Color = "white",
+                        TimeLeft = 0,
+                        Role = "observer"
+                    };
+
                     await Groups.AddToGroupAsync(Context.ConnectionId, gameId);
-                    await Clients.Caller.SendAsync("JoinedAsObserver", game);
+                    await Clients.Caller.SendAsync("JoinedAsObserver", game, player);
                     return;
                 }
             }
