@@ -1,0 +1,8 @@
+.navitem {
+    // background-color: red;
+    text-decoration: none;
+    // border: 1px solid black;
+    &:hover {
+        transform: scale(1.05);
+    }
+}
