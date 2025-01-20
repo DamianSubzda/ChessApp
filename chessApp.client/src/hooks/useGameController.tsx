@@ -23,13 +23,19 @@ export default function useGameController() {
   const player = useRef<Player | null>(null);
   const observer = useRef<Player | null>(null);
 
-  const whiteTimer = useTimer(0);
-  const blackTimer = useTimer(0);
   const moveValidator = useMoveValidator();
   const gameOver = useGameOver();
   const drawRequest = useDrawRequest(gameOver.gameResult);
 
   const [isPlayerMove, setIfPlayerCanMove] = useState<boolean>(false);
+
+  const handleTimeRunOut = async () => {
+    if (gameOver.hasHandledGameOver.current || player.current === null) return;
+    GameService.timeRunOut();
+  };
+
+  const whiteTimer = useTimer(0, player.current?.color === "white" ? handleTimeRunOut : () => {});
+  const blackTimer = useTimer(0, player.current?.color === "black" ? handleTimeRunOut : () => {});
 
   const handlePlayerJoin = (playerData: Player) => {
     player.current = playerData;
@@ -52,8 +58,8 @@ export default function useGameController() {
 
   const setTimers = (game: Game) => {
     if (game.playerWhite && game.playerBlack){
-      whiteTimer.handleTimeChange(game.playerWhite.timeLeft);
-      blackTimer.handleTimeChange(game.playerBlack.timeLeft);
+      whiteTimer.resetTimer(game.playerWhite.timeLeft);
+      blackTimer.resetTimer(game.playerBlack.timeLeft);
     }
   }
 
@@ -100,7 +106,7 @@ export default function useGameController() {
       isPat
     );
     move.notation = notation;
-
+    
     const timeLeft = player.current.color === "white" ? whiteTimer.timeRef.current : blackTimer.timeRef.current;
     player.current.timeLeft = timeLeft;
 
@@ -121,11 +127,11 @@ export default function useGameController() {
   const handleTurn = (turn: GameTurn) => {
     if (turn.player.color === "white"){
       whiteTimer.stopTimer();
-      whiteTimer.handleTimeChange(turn.player.timeLeft);
+      whiteTimer.resetTimer(turn.player.timeLeft);
       blackTimer.startTimer();
     } else {
       blackTimer.stopTimer();
-      blackTimer.handleTimeChange(turn.player.timeLeft);
+      blackTimer.resetTimer(turn.player.timeLeft);
       whiteTimer.startTimer();
     }
     if (turn.player.connectionId !== player.current?.connectionId){
@@ -142,11 +148,6 @@ export default function useGameController() {
     dispatch(addTurn(turn));
   };
 
-  const handleTimeRunOut = async () => {
-    if (gameOver.hasHandledGameOver.current || player.current === null) return;
-    GameService.timeRunOut();
-  };
-
   const onClickResignGame = async () => {
     if (gameOver.hasHandledGameOver.current || player.current === null) return;
     GameService.resignGame();
@@ -156,7 +157,7 @@ export default function useGameController() {
     drawRequest.acceptDrawRequest();
   };
 
-  const onClickRotateBoardForObserver =() => {
+  const onClickRotateBoardForObserver = async () => {
     if (observer.current) {
       const updatedObserver = {
         ...observer.current,

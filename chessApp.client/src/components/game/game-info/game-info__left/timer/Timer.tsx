@@ -1,44 +1,12 @@
-import { useEffect } from "react";
 import "./Timer.scss"
 import React from "react";
 import ClockIcon from "../../../../icons/ClockIcon.tsx";
 
 interface TimerProps {
-    className?: string,
     time: number,
-    onTimeRunOut: () => void,
-    onTimeChange: (newTime: number) => void,
-    isTimerRunning: boolean
 }
 
-function Timer({time, onTimeRunOut, onTimeChange, isTimerRunning}: TimerProps){
-
-    useEffect(()=>{
-        if (!isTimerRunning) return;
-
-        const interval = time < 10 
-        ? setInterval(() => {
-            const newTime = Math.max(time - 0.1, 0);
-            onTimeChange(newTime);
-
-            if (newTime === 0) {
-                clearInterval(interval);
-                onTimeRunOut();
-            }
-        }, 100)
-        : setInterval(() => {
-            const newTime = Math.max(time - 1, 0);
-            onTimeChange(newTime);
-
-            if (newTime === 0) {
-                clearInterval(interval);
-                onTimeRunOut();
-            }
-        }, 1000);
-
-        return () => clearInterval(interval);
-
-    }, [isTimerRunning, time, onTimeRunOut, onTimeChange])
+function Timer({time}: TimerProps){
 
     function displayTime(){
         if (time >= 3600){

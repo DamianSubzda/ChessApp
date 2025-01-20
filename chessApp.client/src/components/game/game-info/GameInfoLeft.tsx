@@ -56,18 +56,10 @@ function GameInfoLeft({ gameController }: GameInfoLeftPlayerProps) {
         <TakenPieces groupedPieces={enemyTakenPieces} />
       </div>
       <Timer
-        className="timer"
         time={enemyTimer.time}
-        onTimeRunOut={() => {}}
-        onTimeChange={enemyTimer.handleTimeChange}
-        isTimerRunning={enemyTimer.isRunning}
       />
       <Timer
-        className="timer"
         time={playerTimer.time}
-        onTimeRunOut={gameController.handleTimeRunOut}
-        onTimeChange={playerTimer.handleTimeChange}
-        isTimerRunning={playerTimer.isRunning}
       />
       <div className="taken-pieces taken-pieces--player">
         <TakenPieces groupedPieces={playerTakenPieces} />
