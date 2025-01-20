@@ -12,7 +12,7 @@ import { useRef, useEffect } from "react";
 import { Square } from "../types/Square.ts";
 
 export default function useMoveValidator() {
-  const squares = useSelector((state: AppState) => state.board.squares);
+  const squares = useSelector((state: AppState) => state.boardStore.squares);
   const squaresRef = useRef<Square[]>([]);
 
   const isMoveCorrect = (move: Move) => {

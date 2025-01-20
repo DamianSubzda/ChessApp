@@ -11,10 +11,10 @@ import Result from "../game/board/Result.tsx";
 
 import GameService from "../../services/GameService.ts";
 
-import { clearMoves } from "../../store/moveHistoryReducer.ts";
 import { clearPieces } from "../../store/takenPiecesReducer.ts";
 import GameInfoLeft from "./game-info/GameInfoLeft.tsx";
 import GameInfoRightPlayer from "../game/game-info/GameInfoRight.tsx";
+import { clearGame } from "../../store/gameReducer.ts";
 
 function Game() {
   const { gameId } = useParams();
@@ -56,7 +56,7 @@ function Game() {
     } else if (isValidGameId !== true) return;
 
     dispatch(clearPieces());
-    dispatch(clearMoves());
+    dispatch(clearGame());
 
     GameService.joinGame(gameId, playerName);
 

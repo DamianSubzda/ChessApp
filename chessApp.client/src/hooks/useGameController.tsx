@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState,  } from "react";
 import GameService from "../services/GameService.ts";
 import { movePiece, promoteToQueen, reverseBoard } from "../store/boardReducer.ts";
-import { setGame } from "../store/gameReducer.ts";
-import { addMove } from "../store/moveHistoryReducer.ts";
+import { addTurn, setGame } from "../store/gameReducer.ts";
 import { addPiece } from "../store/takenPiecesReducer.ts";
 import { Move } from "../types/Move";
 import { Piece } from "../types/Piece";
@@ -140,12 +139,7 @@ export default function useGameController() {
     }
 
     dispatch(addPiece(turn.move.takenPiece));
-    dispatch(
-      addMove({
-        notation: turn.move.notation,
-        color: turn.player.color,
-      })
-    );
+    dispatch(addTurn(turn));
   };
 
   const handleTimeRunOut = async () => {

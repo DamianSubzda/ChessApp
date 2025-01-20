@@ -22,7 +22,7 @@ class GameService extends SignalRService {
     this.on("GameStarted", callback);
   }
 
-  public async onObserverJoined(callback: (game: Game) => void): Promise<void> {
+  public async onObserverJoined(callback: (game: Game, playerData: Player) => void): Promise<void> {
     this.on("JoinedAsObserver", callback);
   }
 

@@ -12,8 +12,8 @@ interface GameInfoLeftPlayerProps {
 }
 
 function GameInfoLeft({ gameController }: GameInfoLeftPlayerProps) {
-  const takenPieces = useSelector((state: AppState) => state.takenPieces);
-  const game = useSelector((state: AppState) => state.game);
+  const takenPieces = useSelector((state: AppState) => state.takenPiecesStore);
+  const game = useSelector((state: AppState) => state.gameStore);
 
   const playerColor = gameController.player.current
     ? gameController.player.current?.color

@@ -5,25 +5,22 @@ import "./Chessboard.scss"
 import type { AppState } from "../../../store/store.ts";
 import { useDispatch, useSelector } from "react-redux";
 import { setupBoard, reverseBoard } from "../../../store/boardReducer.ts";
+import { Player } from "../../../types/Player.ts";
 
 interface ChessboardProps {
-    color: "white" | "black" | undefined,
-    isRotated: boolean,
+    player: Player | null
     makeMove: any
 }
 
-function Chessboard({ color, isRotated, makeMove }: ChessboardProps) {
+function Chessboard({player, makeMove}: ChessboardProps) {
     const dispatch = useDispatch();
-    const squares = useSelector((state: AppState) => state.board.squares);
+    const squares = useSelector((state: AppState) => state.boardStore.squares);
 
     useEffect(() => {
+        if (player?.color === null) return;
         dispatch(setupBoard());
-        if (color === "black") dispatch(reverseBoard());
-    }, [color, dispatch]);
-
-    useEffect(()=> {
-        dispatch(reverseBoard());
-    }, [isRotated, dispatch])
+        if (player?.color === "black") dispatch(reverseBoard());
+    }, [player?.color, dispatch]);
 
     return (
         <div className="chessboard">
