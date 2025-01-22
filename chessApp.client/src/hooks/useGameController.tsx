@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState,  } from "react";
 import GameService from "../services/GameService.ts";
-import { movePiece, promoteToQueen, reverseBoard } from "../store/boardReducer.ts";
+import { castle, enPassant, movePiece, promoteToQueen, reverseBoard } from "../store/boardReducer.ts";
 import { addTurn, setGame } from "../store/gameReducer.ts";
 import { addPiece } from "../store/takenPiecesReducer.ts";
 import { Move } from "../types/Move";
@@ -10,13 +10,16 @@ import { generateChessNotation } from "../utils/movesNotation.ts";
 import useTimer from "./useTimer.tsx";
 import useDrawRequest from "./useDrawRequest.tsx";
 import useGameOver from "./useGameOver.tsx";
-import useMoveValidator from "./useMoveValidator.tsx";
+import useMoveValidator from "./moves/useMoveValidator.tsx";
 import { useDispatch } from "react-redux";
 import { Player } from "../types/Player";
 import { Game } from "../types/Game.ts";
 import { Coordinate } from "../types/Coordinate.ts";
 import { GameTurn } from "../types/GameTurn.ts";
 import { GameResult } from "../types/GameResult.ts";
+import { getTimeFromGameType } from "../utils/getTimeFromGameType.ts";
+import { GameDetails } from "../types/GameDetails.ts";
+import useSpecialMoves from "./moves/useSpecialMoves.tsx";
 
 export default function useGameController() {
   const dispatch = useDispatch();
@@ -24,6 +27,7 @@ export default function useGameController() {
   const observer = useRef<Player | null>(null);
 
   const moveValidator = useMoveValidator();
+  const specialMoves = useSpecialMoves();
   const gameOver = useGameOver();
   const drawRequest = useDrawRequest(gameOver.gameResult);
 
@@ -58,8 +62,9 @@ export default function useGameController() {
 
   const setTimers = (game: Game) => {
     if (game.playerWhite && game.playerBlack){
-      whiteTimer.resetTimer(game.playerWhite.timeLeft);
-      blackTimer.resetTimer(game.playerBlack.timeLeft);
+      const time = getTimeFromGameType(game.type);
+      whiteTimer.resetTimer(time);
+      blackTimer.resetTimer(time);
     }
   }
 
@@ -71,51 +76,77 @@ export default function useGameController() {
     if (player.current === null || !isPlayerMove) return;
     if (square.piece?.color !== player.current?.color) return;
 
-    const move = {
-      from: { row: square.position.row, column: square.position.column } as Coordinate,
-      to: { row: target.row, column: target.column } as Coordinate,
-      piece: square.piece,
-    } as Move;
-    if (!moveValidator.isMoveCorrect(move)) return;
+    const from = { row: square.position.row, column: square.position.column } as Coordinate;
+    const to = { row: target.row, column: target.column } as Coordinate;
 
     const currentSquares = [...moveValidator.squares];
     const takenPiece: Piece | null =
       currentSquares.find(
-        (sq) => sq.position.column === move.to.column && sq.position.row === move.to.row
+        (sq) => sq.position.column === to.column && sq.position.row === to.row
       )?.piece ?? null;
-    move.takenPiece = takenPiece;
+    
+    const move = {
+      from: from,
+      to: to,
+      piece: square.piece,
+      takenPiece: takenPiece,
+      isPromotion: specialMoves.isPromotion(from, to, square.piece),
+      isCastle: specialMoves.isCastle(from, to, square.piece),
+      isEnPassant: specialMoves.isEnPassant(from, to, square.piece),
+      notation: "",
+    } as Move;
+
+    if (!moveValidator.isMoveCorrect(move)) return;
 
     dispatch(movePiece(move));
 
-    const isPromotion = moveValidator.isPromotion(move);
-
-    if (isPromotion) {
+    if (move.isPromotion) {
       dispatch(promoteToQueen(move));
+    }
+
+    if(move.isEnPassant) {
+      dispatch(enPassant(move))
+    }
+
+    if(move.isCastle) {
+      dispatch(castle(move));
     }
 
     const isCheck = moveValidator.isPlayerInCheck(move);
     const isCheckmate = moveValidator.isPlayerInMat(move);
     const isPat = moveValidator.isPlayerInPat(move);
+    const isTieByInsufficientMaterial = moveValidator.isTieByInsufficientMaterial(move);
+    const isTieBy50MovesRule = moveValidator.isTieBy50MovesRule(move);
+    const isTieByRepeatingPosition = moveValidator.isTieByRepeatingPosition(move);
+    const isTie = isPat || isTieByInsufficientMaterial || isTieBy50MovesRule || isTieByRepeatingPosition;
 
     const notation = generateChessNotation(
       move,
       moveValidator.squares,
-      isPromotion,
       isCheck,
       isCheckmate,
-      isPat
+      isTie
     );
     move.notation = notation;
     
     const timeLeft = player.current.color === "white" ? whiteTimer.timeRef.current : blackTimer.timeRef.current;
-    player.current.timeLeft = timeLeft;
+
+    const gameDetails = { //TODO
+      timeLeft: timeLeft,
+      canEnPassant: false,
+      canCastleKingSide: false,
+      canCastleQueenSide: false,
+    } as GameDetails;
 
     const turn = {
       player: player.current,
       move: move,
-      isPromotion: isPromotion,
+      gameDetails: gameDetails,
       isCheckmate: isCheckmate,
       isPat: isPat,
+      isTieByInsufficientMaterial: isTieByInsufficientMaterial,
+      isTieBy50MovesRule: isTieBy50MovesRule,
+      isTieByRepeatingPosition: isTieByRepeatingPosition
       } as GameTurn
 
     GameService.makeTurn(turn);
@@ -127,18 +158,26 @@ export default function useGameController() {
   const handleTurn = (turn: GameTurn) => {
     if (turn.player.color === "white"){
       whiteTimer.stopTimer();
-      whiteTimer.resetTimer(turn.player.timeLeft);
+      whiteTimer.resetTimer(turn.gameDetails.timeLeft);
       blackTimer.startTimer();
     } else {
       blackTimer.stopTimer();
-      blackTimer.resetTimer(turn.player.timeLeft);
+      blackTimer.resetTimer(turn.gameDetails.timeLeft);
       whiteTimer.startTimer();
     }
     if (turn.player.connectionId !== player.current?.connectionId){
       dispatch(movePiece(turn.move));
 
-      if (turn.isPromotion) {
+      if (turn.move.isPromotion) {
         dispatch(promoteToQueen(turn.move));
+      }
+
+      if(turn.move.isEnPassant) {
+        dispatch(enPassant(turn.move))
+      }
+  
+      if(turn.move.isCastle) {
+        dispatch(castle(turn.move));
       }
 
       setIfPlayerCanMove(true);

@@ -1,10 +1,8 @@
 ﻿using ChessApp.Server.Exceptions;
 using ChessApp.Server.Models;
 using ChessApp.Server.Services;
-using ChessApp.Server.Utilities;
 using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
-using System.Numerics;
 
 namespace ChessApp.Server.Hubs
 {
@@ -42,7 +40,6 @@ namespace ChessApp.Server.Hubs
                         ConnectionId = Context.ConnectionId,
                         PlayerName = playerName,
                         Color = isPlayerWhite ? "white" : "black",
-                        TimeLeft = GameTypeUtil.GetGameTimeForGameType(game.Type),
                         Role = "player"
                     };
 
@@ -65,7 +62,6 @@ namespace ChessApp.Server.Hubs
                         PlayerName = playerName,
                         ConnectionId = Context.ConnectionId,
                         Color = "white",
-                        TimeLeft = GameTypeUtil.GetGameTimeForGameType(game.Type),
                         Role = "player"
                     };
                     game.PlayerWhite = player;
@@ -81,7 +77,6 @@ namespace ChessApp.Server.Hubs
                         PlayerName = playerName,
                         ConnectionId = Context.ConnectionId,
                         Color = "black",
-                        TimeLeft = GameTypeUtil.GetGameTimeForGameType(game.Type),
                         Role = "player"
                     };
                     game.PlayerBlack = player;
@@ -97,7 +92,6 @@ namespace ChessApp.Server.Hubs
                         PlayerName = playerName,
                         ConnectionId = Context.ConnectionId,
                         Color = "white",
-                        TimeLeft = 0,
                         Role = "observer"
                     };
 
@@ -161,7 +155,7 @@ namespace ChessApp.Server.Hubs
         {
             try
             {
-                if (turn.Player.TimeLeft <= 0)
+                if (turn.GameDetails.TimeLeft <= 0)
                 {
                     await TimeRunOut(gameId);
                 }
@@ -172,29 +166,35 @@ namespace ChessApp.Server.Hubs
                     var game = _gameService.GetGame(gameId) ?? throw new GameNotFoundException(gameId);
                     game.Turns.Add(turn);
 
+                    var caller = turn.Player == game.PlayerWhite ? game.PlayerWhite : game.PlayerBlack;
+                    var receiver = turn.Player == game.PlayerWhite ? game.PlayerBlack : game.PlayerWhite;
+
+                    if (caller == null || receiver == null)
+                    {
+                        return;
+                    }
+
                     if (turn.IsCheckmate)
                     {
-                        var caller = turn.Player == game.PlayerWhite ? game.PlayerWhite : game.PlayerBlack;
-                        var receiver = turn.Player == game.PlayerWhite ? game.PlayerBlack : game.PlayerWhite;
-
-                        if (caller != null && receiver != null)
-                        {
-                            await PlayerCheckmated(gameId, caller, receiver);
-                        }
-                        return;
+                        await PlayerCheckmated(gameId, caller, receiver);
                     }
-
-                    if (turn.IsPat)
+                    else if (turn.IsPat)
                     {
-                        var caller = turn.Player == game.PlayerWhite ? game.PlayerWhite : game.PlayerBlack;
-                        var receiver = turn.Player == game.PlayerWhite ? game.PlayerBlack : game.PlayerWhite;
-
-                        if (caller != null && receiver != null)
-                        {
-                            await PlayerInPat(gameId, caller, receiver);
-                        }
-                        return;
+                        await PlayerInPat(gameId, caller, receiver);
                     }
+                    else if (turn.IsTieByInsufficientMaterial)
+                    {
+                        await InsufficientMaterial(gameId);
+                    }
+                    else if (turn.IsTieBy50MovesRule)
+                    {
+                        await TieBy50MovesRule(gameId);
+                    }
+                    else if (turn.IsTieByRepeatingPosition)
+                    {
+                        await TieByRepeatingPosition(gameId);
+                    }
+
                 }
             }
             catch (GameNotFoundException)
@@ -259,6 +259,30 @@ namespace ChessApp.Server.Hubs
             _gameService.SetGameStatusToEnded(gameId);
         }
 
+        public async Task InsufficientMaterial(string gameId)
+        {
+            var result = new GameResult { Result = "Tie!", Reason = "Insufficient material!" };
+
+            await Clients.Group(gameId).SendAsync("GameOver", result);
+            _gameService.SetGameStatusToEnded(gameId);
+        }
+
+        public async Task TieBy50MovesRule(string gameId)
+        {
+            var result = new GameResult { Result = "Tie!", Reason = "50 moves rule!" };
+
+            await Clients.Group(gameId).SendAsync("GameOver", result);
+            _gameService.SetGameStatusToEnded(gameId);
+        }
+
+        public async Task TieByRepeatingPosition(string gameId)
+        {
+            var result = new GameResult { Result = "Tie!", Reason = "Three times repeated position!" };
+
+            await Clients.Group(gameId).SendAsync("GameOver", result);
+            _gameService.SetGameStatusToEnded(gameId);
+        }
+
         public async Task SendDrawRequest(string gameId)
         {
             try
@@ -284,7 +308,7 @@ namespace ChessApp.Server.Hubs
             _gameService.SetGameStatusToEnded(gameId);
         }
 
-        public async Task DeclineDrawRequest(string gameId) //To chyba w ogóle bez sensu, ponieważ nic nie wnosi... (ale zostawię)
+        public async Task DeclineDrawRequest(string gameId)
         {
             await Clients.OthersInGroup(gameId).SendAsync("DeclineDraw");
         }

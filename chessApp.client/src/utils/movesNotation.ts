@@ -5,12 +5,11 @@ import { changeDigitsToLetter } from "./board.ts";
 export function generateChessNotation(
   move: Move,
   squares: Square[],
-  isPromotion: boolean,
   isCheck: boolean,
   isCheckmate: boolean,
   isTie: boolean
 ): string {
-  const pieceSymbol = isPromotion ? "" : getPieceSymbol(move.piece.pieceType); 
+  const pieceSymbol = move.isPromotion ? "" : getPieceSymbol(move.piece.pieceType); 
   const targetRow = `${move.to.row}`;
   const targetColumn = `${changeDigitsToLetter(move.to.column).toLowerCase()}`;
   const targetSquare = targetColumn + targetRow;
@@ -32,7 +31,7 @@ export function generateChessNotation(
   return (
     `${pieceSymbol}${isCapture ? (pieceSymbol === "" ? fromColumn : "") + "x" : ""}` +
     `${targetSquare}` +
-    `${isPromotion ? "=Q" : ""}` +
+    `${move.isPromotion ? "=Q" : ""}` +
     `${isCheckmate ? "#" : isCheck ? "+" : ""}` +
     `${isTie ? "=" : ""}`
   );

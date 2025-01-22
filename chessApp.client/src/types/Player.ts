@@ -1,8 +1,7 @@
 
-export type Player = {
-    playerName: string;
-    connectionId: string;
-    color: "white" | "black";
-    timeLeft: number;
-    role: "player" | "observer"
+export type  Player = {
+    readonly playerName: string;
+    readonly connectionId: string;
+    readonly color: "white" | "black";
+    readonly role: "player" | "observer";
 }
