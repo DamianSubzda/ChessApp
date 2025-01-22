@@ -2,26 +2,26 @@ import NameForm from "../components/forms/NameForm";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./NameFormPage.scss"
 
-function NameFormPage({ path }){
-    const navigate = useNavigate();
-    const location = useLocation();
+function NameFormPage(){
+	const navigate = useNavigate();
+	const location = useLocation();
 
-    const redirectPath = location.state?.redirectPath || "/";
+	const redirectPath = location.state?.redirectPath || "/";
 
-    function onSubmit(name){
-        if (name.trim() !== ""){
-            localStorage.setItem("PlayerName", name);
-            navigate(redirectPath);
-        }else{
-            alert("Name cannot be null!");   
-        }
-    }
+	function onSubmit(name){
+			if (name.trim() !== ""){
+					localStorage.setItem("PlayerName", name);
+					navigate(redirectPath);
+			}else{
+					alert("Name cannot be null!");   
+			}
+	}
 
-    return (
-        <div className="name-form-page">
-            <NameForm onSubmit={onSubmit}/>
-        </div>
-    );
+	return (
+			<div className="name-form-page">
+					<NameForm onSubmit={onSubmit}/>
+			</div>
+	);
 }
 
 export default NameFormPage;

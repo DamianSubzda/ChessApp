@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+      "noEmit": true,
+      "allowImportingTsExtensions": true,
+      "target": "ES6",                           // Wersja JavaScript
+      "module": "ESNext",                        // System modułów (np. dla Webpack lub Vite)
+      "moduleResolution": "node",                // Rozwiązywanie modułów jak w Node.js
+      "jsx": "react",                            // Obsługa JSX dla React
+      "baseUrl": "./src",                        // Ustaw bazowy katalog importów
+    },
+    "include": ["src"],                          // Pliki, które będą kompilowane
+    "exclude": ["node_modules", "dist"]         // Wykluczone foldery
+  }
+  
