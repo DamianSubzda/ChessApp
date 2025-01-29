@@ -1,20 +1,24 @@
 import "./Game.scss";
 import React from "react";
 import { useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import useGameValidator from "../../hooks/useGameValidator.tsx";
-import useGameController from "../../hooks/useGameController.tsx";
-
-import Chessboard from "../game/board/Chessboard.tsx";
-import Result from "../game/board/Result.tsx";
+import { useNavigate, useParams } from "react-router-dom";
 
 import GameService from "../../services/GameService.ts";
 
+// Redux actions:
 import { clearPieces } from "../../store/takenPiecesReducer.ts";
+import { clearGame } from "../../store/gameReducer.ts";
+
+// Hooks:
+import useGameValidator from "../../hooks/useGameValidator.tsx";
+import useGameController from "../../hooks/useGameController.tsx";
+
+// Components:
+import Chessboard from "../game/board/Chessboard.tsx";
+import Result from "../game/board/Result.tsx";
 import GameInfoLeft from "./game-info/GameInfoLeft.tsx";
 import GameInfoRightPlayer from "../game/game-info/GameInfoRight.tsx";
-import { clearGame } from "../../store/gameReducer.ts";
 
 function Game() {
   const { gameId } = useParams();

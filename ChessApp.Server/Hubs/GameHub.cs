@@ -155,7 +155,7 @@ namespace ChessApp.Server.Hubs
         {
             try
             {
-                if (turn.GameDetails.TimeLeft <= 0)
+                if (turn.TimeLeft <= 0)
                 {
                     await TimeRunOut(gameId);
                 }

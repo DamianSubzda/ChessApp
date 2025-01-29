@@ -9,5 +9,5 @@ export type Move = {
     isCastle: boolean;
     isEnPassant: boolean;
     takenPiece: Piece | null;
-    notation: string;
+    notation: string | null;
 };

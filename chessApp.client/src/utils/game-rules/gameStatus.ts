@@ -38,14 +38,6 @@ function checkIfPlayerWillHaveInsufficientMaterial(
   return isInsufficientMaterial(playerColor, enemyColor, simulatedSquares);
 }
 
-function checkIfTieBy50MovesRule(move: Move, turns: GameTurn[]) {
-  if (move.takenPiece !== null || move.piece.pieceType === "pawn") return false;
-  return !turns.some(
-    (turn) =>
-      turn.move.takenPiece !== null || turn.move.piece.pieceType === "pawn"
-  );
-}
-
 function isPlayerInPat(color: string, squares: Square[]) {
   if (isKingInCheck(color, squares)) return false;
   // To jest overr kill bo sprawdza się czy figura może ruszyć się na jakiekolwiek dostępne pole na planszy czyli zawsze jest ilość figur * 64;
@@ -119,6 +111,5 @@ export {
   checkIfPlayerWillBeCheckmated,
   checkIfPlayerWillBeInCheck,
   checkIfPlayerWillBeInPat,
-  checkIfPlayerWillHaveInsufficientMaterial,
-  checkIfTieBy50MovesRule,
+  checkIfPlayerWillHaveInsufficientMaterial
 };
