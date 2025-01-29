@@ -81,13 +81,19 @@ export default function useTurnHandler(player: React.MutableRefObject<Player>) {
     return FENGenerator(fen);
   }
 
-  const handleMakeTurn = async (square: Square, target: any, timeLeft: number) => {
-    if (square.piece?.color !== player.current?.color) return;
+  const isTurnCorrect = (square: Square, target: any) : boolean => {
+    if (square.piece?.color !== player.current?.color) return false;
     
     const move = createMove(square, target);
 
-    if (!moveValidator.isMoveCorrect(move)) return;
+    if (!moveValidator.isMoveCorrect(move)) return false;
 
+    return true;
+  }
+
+  const handleMakeTurn = async (square: Square, target: any, timeLeft: number) => {
+    
+    const move = createMove(square, target);
     applyMoveLocally(move);
 
     const fen = createFENNotation()
@@ -133,11 +139,12 @@ export default function useTurnHandler(player: React.MutableRefObject<Player>) {
     if (turn.move.takenPiece) {
       dispatch(addPiece(turn.move.takenPiece));
     }
-
+    
     dispatch(addTurn(turn));
   };
 
   return{
+    isTurnCorrect,
     handleMakeTurn,
     handleTurn,
   };

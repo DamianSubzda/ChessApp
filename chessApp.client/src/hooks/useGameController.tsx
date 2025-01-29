@@ -47,12 +47,13 @@ export default function useGameController() {
   };
 
   const handleJoinedAsObserver = (game: Game, playerData: Player) => {
-    
     observer.current = playerData;
+    const localObserverTurns = game.turns;
+    game.turns = [] as GameTurn[];
     dispatch(setGame(game));
     setTimers(game);
 
-    game.turns.forEach((turn) => {
+    localObserverTurns.forEach((turn) => {
       handleTurn(turn);
     });
   };
@@ -76,6 +77,7 @@ export default function useGameController() {
 
   const handleMakeTurn = async (square: Square, target: any) => {
     if (!isPlayerMove) return;
+    if (!turnHandler.isTurnCorrect(square, target)) return;
 
     const timeLeft = player.current.color === "white" ? whiteTimer.timeRef.current : blackTimer.timeRef.current;
     turnHandler.handleMakeTurn(square, target, timeLeft);
@@ -97,7 +99,7 @@ export default function useGameController() {
 
     turnHandler.handleTurn(turn);
 
-    if (player.current !== null){
+    if (player.current !== null && player.current.color !== turn.player.color){
       setIfPlayerCanMove(true);
     }
   };
