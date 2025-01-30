@@ -1,5 +1,7 @@
+import { Coordinate } from "types/Coordinate";
 import { Move } from "../../types/Move";
 import { Square } from "../../types/Square";
+import { checkPieces } from "./validation";
 
 
 function simulateSquaresAfterMove(move: Move, squares: Square[]) {
@@ -46,5 +48,22 @@ function checkIfSquareIsClearFromAllyPieces(move: Move, squares: Square[]) {
     return true;
 }
 
+function checkIfSquareIsAttacked(color: "white" | "black", attackedSquare: Square, squares: Square[]) {
+    const enemyColor = color === "white" ? "black" : "white";
 
-export { simulateSquaresAfterMove, getLineOfAttack, checkIfSquareIsClearFromAllyPieces };
+    for (const square of squares) {
+        if (square.piece?.color === enemyColor && attackedSquare) {
+            const move = {
+                from: { row: square.position.row, column: square.position.column} as Coordinate,
+                to: { row: attackedSquare.position.row, column: attackedSquare.position.column} as Coordinate,
+                piece: square.piece,
+            } as Move;
+            const isMovePossible = checkPieces(move, squares);
+            if (isMovePossible) return true;
+        }
+    }
+    return false;
+}
+
+
+export { simulateSquaresAfterMove, getLineOfAttack, checkIfSquareIsClearFromAllyPieces, checkIfSquareIsAttacked };

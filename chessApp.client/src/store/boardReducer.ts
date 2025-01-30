@@ -112,9 +112,37 @@ const boardSlice = createSlice({
     },
     castle(state, action: PayloadAction<Move>) {
       const move = action.payload;
-      //TODO
+  
+      const isKingSide = move.to.column > move.from.column;
       
-    },
+      const rookColumn = isKingSide ? 8 : 1;
+      const newRookColumn = isKingSide ? move.to.column - 1 : move.to.column + 1;
+  
+      state.squares = state.squares.map((square) => {
+          if (square.position.row === move.to.row && square.position.column === move.to.column) {
+              return { ...square, piece: move.piece };
+          }
+          if (square.position.row === move.from.row && square.position.column === move.from.column) {
+              return { ...square, piece: null };
+          }
+  
+          if (square.position.row === move.to.row && square.position.column === newRookColumn) {
+              return {
+                  ...square,
+                  piece: {
+                      pieceType: "rook",
+                      color: move.piece.color,
+                      src: move.piece.color === "white" ? "wr.png" : "br.png",
+                  } as Piece,
+              };
+          }
+          if (square.position.row === move.to.row && square.position.column === rookColumn) {
+              return { ...square, piece: null };
+          }
+  
+          return square;
+      });
+    },  
   },
 });
 

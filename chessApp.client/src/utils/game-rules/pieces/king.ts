@@ -1,22 +1,37 @@
 import { Coordinate } from "../../../types/Coordinate";
 import { Move } from "../../../types/Move";
 import { Square } from "../../../types/Square";
-import { checkIfSquareIsClearFromAllyPieces, getLineOfAttack, simulateSquaresAfterMove } from "../common.ts";
+import { checkIfSquareIsAttacked, checkIfSquareIsClearFromAllyPieces, getLineOfAttack, simulateSquaresAfterMove } from "../common.ts";
 import { checkIfPlayersMoveIsCorrect, checkPieces } from "../validation.ts";
 
 function checkKing(move: Move, squares: Square[]){
     if (Math.abs(move.to.row - move.from.row) > 1) return false;
     if (Math.abs(move.to.column - move.from.column) > 1){
-        //Roszada TODO
         if (Math.abs(move.to.row - move.from.row) > 0) return false;
         if (Math.abs(move.to.column - move.from.column) !== 2) return false;
         
-        
-        return false;
+        //Roszada
+        return checkIfKingCanCastle(move, squares);
     } 
     if (checkIfEnemiesKingIsInRange(move, squares)) return false; //Króle nie mogą stać obok siebie!
 
     return true;
+}
+
+function checkIfKingCanCastle(move: Move, squares: Square[]){
+    if (isKingInCheck(move.piece.color, squares)) return false;
+    
+    const squaresToCheck = [] as Square[];
+    const deltaColumn = Math.sign(move.to.column - move.from.column);
+
+    squaresToCheck.push({ position: { row: move.from.row, column: move.from.column + deltaColumn }} as Square);
+    squaresToCheck.push({ position: { row: move.from.row, column: move.from.column + (2 * deltaColumn) }} as Square);
+
+    for (const square of squaresToCheck){
+        if (checkIfSquareIsAttacked(move.piece.color, square, squares)) return false;
+    }
+    return true;
+
 }
 
 function checkIfEnemiesKingIsInRange(move: Move, squares: Square[]){

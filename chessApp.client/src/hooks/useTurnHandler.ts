@@ -134,6 +134,7 @@ export default function useTurnHandler(player: React.MutableRefObject<Player>) {
     if (turn.player.connectionId !== player.current?.connectionId){
       applyMoveLocally(turn.move);
       moveValidator.updateHalfMove(turn.move);
+      moveValidator.updateCastleRights(turn.move);
     }
 
     if (turn.move.takenPiece) {

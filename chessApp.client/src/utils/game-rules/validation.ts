@@ -10,12 +10,11 @@ import { checkIfSquareIsClearFromAllyPieces, simulateSquaresAfterMove } from "./
 
 
 function checkIfPlayersMoveIsCorrect(move: Move, squares: Square[]){
-    if (move.from.column === move.to.column && move.from.row === move.to.row) return false; //Jeśli ruch jest na to samo pole.
+    if (move.from.column === move.to.column && move.from.row === move.to.row) return false;
 
     let canMove =  checkPieces(move, squares); 
     
     if (canMove) {
-        //Jeśli po ruchu nasz król jest w szachu to 'false';
         const simulatedSquares = simulateSquaresAfterMove(move, squares);
         if (isKingInCheck(move.piece.color, simulatedSquares)){
             canMove = false;

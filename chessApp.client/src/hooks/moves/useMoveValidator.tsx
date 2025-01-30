@@ -1,7 +1,6 @@
-import { useSelector, useStore } from "react-redux";
+import { useSelector } from "react-redux";
 import { AppState } from "../../store/store.ts";
 import { Move } from "../../types/Move.ts";
-import { GameTurn } from "../../types/GameTurn.ts";
 import {
   checkIfPlayerWillBeInCheck,
   checkIfPlayerWillBeInPat,
@@ -154,7 +153,7 @@ export default function useMoveValidator() {
     return checkIfPlayerWillBeCheckmated(move, squares);
   };
 
-  const isTieByInsufficientMaterial = (move: Move) => { //Tu są już squersy zaktualizowane więc trzeba będzie to inaczej zrobić
+  const isTieByInsufficientMaterial = (move: Move) => { //Tu są już squersy zaktualizowane (?, do sprawdzenia)
     return checkIfPlayerWillHaveInsufficientMaterial(move, squares);
   };
 
@@ -184,6 +183,7 @@ export default function useMoveValidator() {
     isPlayerInPat,
     isPlayerInMat,
     updateHalfMove,
+    updateCastleRights,
     isTieByInsufficientMaterial,
     isTieBy50MovesRule,
     isTieByRepeatingPosition,
