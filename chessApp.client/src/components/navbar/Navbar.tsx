@@ -1,51 +1,58 @@
-import { useNavigate, useParams, useLocation } from "react-router-dom";
-import React, { useState, useEffect } from "react";
-import NavItem from "./NavItem";
-import ArrowLeftIcon from "../icons/ArrowLeft.tsx";
-import config from "./../../config.json";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+
+import config from "../../config.json";
 import "./Navbar.scss";
+
+import NavItem from "./NavItem.tsx";
+import ArrowLeftIcon from "../icons/ArrowLeft.tsx";
 
 function Navbar() {
   const navigate = useNavigate();
-  const { gameId } = useParams(); // Pobieranie gameId z URL
-  const location = useLocation();
+  const { gameId } = useParams();
   const [showPopup, setShowPopup] = useState(false);
   const [pendingPath, setPendingPath] = useState(null);
   const [isGameFinished, setIsGameFinished] = useState(false);
 
+  useEffect(()=> {
+    setIsGameFinished(false);
+  }, [gameId])
+
   const getGameStatus = async () => {
-    console.log("getGameStatus", gameId);
-    if (!gameId) return;
+    if (!gameId) return false;
 
     try {
-      const response = await fetch(`${config.apiURL}/game-status?gameId=${gameId}`);
+      const response = await fetch(`${config.apiURL}game-status?gameId=${gameId}`);
       if (response.ok) {
         const status = await response.json();
-        console.log("Game status:", status);
-        setIsGameFinished(status === "Finished"); // Zakładamy, że API zwraca "Finished"
+
+        const finished = status !== 1;
+        setIsGameFinished(finished);
+        return finished;
       } else {
         console.error("Failed to fetch game status:", response.statusText);
+        return false;
       }
     } catch (error) {
       console.error("Error fetching game status:", error);
+      return false;
     }
   };
 
-  const handleBack = () => {
-    console.log("back");
-    getGameStatus();
-    if (gameId && !isGameFinished) {
+
+  const handleBack = async () => {
+    const finished = await getGameStatus();
+    if (gameId && !finished) {
       setShowPopup(true);
-      setPendingPath(-1); // Zwraca do poprzedniej strony
+      setPendingPath(-1);
     } else {
       navigate(-1);
     }
   };
 
-  const handleNavigate = (path) => {
-    console.log("navigate");
-    getGameStatus();
-    if (gameId && !isGameFinished) {
+  const handleNavigate = async (path) => {
+    const finished = await getGameStatus();
+    if (gameId && !finished) {
       setShowPopup(true);
       setPendingPath(path);
     } else {
@@ -74,10 +81,10 @@ function Navbar() {
         <button onClick={handleBack}>
           <ArrowLeftIcon size={10} />
         </button>
-        <NavItem to="/" label="Home" onNavigate={handleNavigate} />
-        <NavItem to="/new-game" label="New Game" onNavigate={handleNavigate} />
-        <NavItem to="/lobby" label="Lobby" onNavigate={handleNavigate} />
-        <NavItem to="/player-name" label="Change Name" onNavigate={handleNavigate} />
+        <NavItem to="/" label="Home" isInGame={gameId && !isGameFinished} onNavigate={handleNavigate} />
+        <NavItem to="/new-game" label="New Game" isInGame={gameId && !isGameFinished} onNavigate={handleNavigate} />
+        <NavItem to="/lobby" label="Lobby" isInGame={gameId && !isGameFinished} onNavigate={handleNavigate} />
+        <NavItem to="/player-name" label="Change Name" isInGame={gameId && !isGameFinished} onNavigate={handleNavigate} />
       </div>
 
       {showPopup && (

@@ -68,7 +68,7 @@ namespace ChessApp.Server.Services
             {
                 throw new GameNotFoundException();
             }
-            game.Status = GameStatus.Started;
+            game.Status = status;
         }
     }
 }

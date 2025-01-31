@@ -24,12 +24,11 @@ export default abstract class SignalRService {
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl(this.hubUrl)
       .withAutomaticReconnect()
-      .configureLogging(signalR.LogLevel.Information)
+      .configureLogging(signalR.LogLevel.None)
       .build();
 
     try {
       await this.connection.start();
-      console.log(`Connected to hub: ${this.hubUrl}`);
     } catch (error) {
       console.error(`Error starting connection to ${this.hubUrl}:`, error);
     }
@@ -38,7 +37,6 @@ export default abstract class SignalRService {
   public async stopConnection(): Promise<void> {
     if (this.connection?.state === signalR.HubConnectionState.Connected) {
       await this.connection.stop();
-      console.log(`Connection to ${this.hubUrl} stopped.`);
       this.connection = null;
     }
   }
