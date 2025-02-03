@@ -16,7 +16,7 @@ function Result({ result }: ResultPropsType) {
         <>
             {result && (
                 <div className={`result-notification ${getResultClassName()}`}>
-                    <h1>{result.result.toUpperCase()}</h1>
+                    <h1>{result.result.toUpperCase() === "NEUTRAL" ? "": result.result.toUpperCase()}</h1>
                     <h2>🔥{result.reason}🔥</h2>
                 </div>
             )}
