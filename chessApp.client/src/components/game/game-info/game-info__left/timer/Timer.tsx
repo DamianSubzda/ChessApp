@@ -6,7 +6,7 @@ interface TimerProps {
     time: number,
 }
 
-function Timer({time}: TimerProps){
+function Timer({ time }: TimerProps) {
 
     function displayTime(){
         if (time >= 3600){
@@ -29,14 +29,15 @@ function Timer({time}: TimerProps){
         }
     }
 
-    return(
-        <div className="timer">
+    return (
+        <div className={`timer ${time <= 10 ? "danger" : ""}`}>
             <div className="timer__content">
                 <ClockIcon />
                 <p>{displayTime()}</p>
             </div>
         </div>
     );
+    
 }
 
 export default Timer;

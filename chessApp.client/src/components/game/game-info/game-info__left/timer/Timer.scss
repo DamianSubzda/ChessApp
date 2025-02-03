@@ -1,32 +1,45 @@
 .timer {
-    width: auto;
-    min-width: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: rgb(255, 206, 218);
-    border-radius: 20px;
-    padding: 1rem 1.5rem 1rem 1.5rem;
+    border-radius: 12px;
+    padding: 0.8rem 1.2rem;
+    width: 140px;
+    height: 50px;
+    box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgb(200, 100, 120);
 
-    .timer__content{
+    .timer__content {
         display: flex;
-        flex-direction: row;
         align-items: center;
-        justify-content: center;
-        gap: 7px;
+        justify-content: space-between;
+        width: 100%;
+        gap: 8px;
+
+        svg {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+            color: rgb(80, 50, 50);
+        }
 
         p {
-            padding: 0;
-            margin: 0;
-            height: 40px;
-            font-size: x-large;
-            display: flex;
-            align-items: center;
+            font-size: 1.5rem;
             font-weight: 600;
+            color: rgb(50, 30, 30);
+            white-space: nowrap;
+            flex-grow: 1;
+            text-align:end;
         }
     }
-    
-    
 
+    &.danger {
+        background-color: rgb(255, 100, 100);
+        border-color: rgb(180, 50, 50);
+
+        p {
+            color: black;
+        }
+    }
 }
-
