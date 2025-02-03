@@ -6,15 +6,15 @@
     .taken-pieces-group {
         display: flex;
         position: relative;
-        height: 40px;
-        width: calc(40px + (var(--max-count, 1) - 1) * 10px);
+        height: 32px;
+        width: calc(32px + (var(--max-count, 1) - 1) * 8px);
 
         img {
             user-select: none;
             position: absolute;
-            height: 40px;
-            width: 40px;
-            left: calc(var(--index, 0) * 10px);
+            height: 32px;
+            width: 32px;
+            left: calc(var(--index, 0) * 8px);
         }
     }
 }

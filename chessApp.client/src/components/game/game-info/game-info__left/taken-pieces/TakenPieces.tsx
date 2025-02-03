@@ -14,7 +14,7 @@ function TakenPieces({ groupedPieces }: TakenPiecesPropsType) {
         "n", // Knight
         "b", // Bishop
         "q", // Queen
-        "k", // KIng
+        "k", // King
     ];
 
     const sortedGroupedPieces = [...groupedPieces].sort((a, b) => {
