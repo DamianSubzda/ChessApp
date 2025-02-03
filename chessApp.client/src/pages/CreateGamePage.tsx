@@ -1,15 +1,20 @@
+import React from "react";
 import { useEffect, useRef, useState } from "react";
-import config from "../config.json";
 import { useNavigate } from "react-router-dom";
+
+import "./CreateGamePage.scss"
+import config from "../config.json";
+
 import LobbyService from "../services/LobbyService.ts";
 import { Game } from "../types/Game.ts";
-import React from "react";
 
-function CreateGame() {
-  const gameRef = useRef<Game | null>(null);
+function CreateGamePage() {
   const navigate = useNavigate();
-  const [gameId, setGameId] = useState("");
+
   const isInitialized = useRef(false);
+  const isGameStarted = useRef(false);
+  const gameRef = useRef<Game | null>(null);
+  const [gameId, setGameId] = useState("");
 
   const handleGameCreate = (game: Game) => {
     gameRef.current = game;
@@ -17,12 +22,13 @@ function CreateGame() {
   };
 
   const handleGameStart = (game: Game) => {
+    isGameStarted.current = true;
     localStorage.setItem("Game", JSON.stringify(game));
     navigate(`/game/${gameRef.current?.gameId}`);
   };
 
   const sendAbandonGameBeacon = () => {
-    if (gameRef.current) {
+    if (gameRef.current && !isGameStarted.current) {
       const payload = JSON.stringify(gameRef.current);
       const blob = new Blob([payload], { type: "application/json" });
       navigator.sendBeacon(`${config.apiURL}abandon-new-game`, blob);
@@ -56,25 +62,17 @@ function CreateGame() {
 
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      sendAbandonGameBeacon();
+      sendAbandonGameBeacon(); //TU
       LobbyService.stopConnection();
     };
   }, []);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100%",
-      }}
-    >
-      <h1>Waiting for player to join...</h1>
-      <h2>GameId: {gameId}</h2>
+    <div className="main__container">
+      <h1>Waiting for opponent to join...</h1>
+      <h5>{gameId}</h5>
     </div>
   );
 }
 
-export default CreateGame;
+export default CreateGamePage;
