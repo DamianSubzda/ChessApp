@@ -4,7 +4,7 @@ export default function useGameTimer(initialTime: number, onTimeRunOut: () => vo
   const [time, setTime] = useState(initialTime);
   const timeRef = useRef<number>(initialTime);
   const [isRunning, setIsRunning] = useState(false);
-  const intervalRef = useRef<number | null>(null);
+  const timeoutRef = useRef<number | null>(null);
 
   const startTimer = () => setIsRunning(true);
   const stopTimer = () => setIsRunning(false);
@@ -13,31 +13,45 @@ export default function useGameTimer(initialTime: number, onTimeRunOut: () => vo
     setIsRunning(false);
     setTime(newTime);
     timeRef.current = newTime;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
   };
 
   useEffect(() => {
-    if (!isRunning) return;
-    
-    intervalRef.current = window.setInterval(() => {
-      timeRef.current = Math.max(timeRef.current - (timeRef.current < 10 ? 0.1 : 1), 0);
+    if (!isRunning) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      return;
+    }
+
+    const tick = () => {
+      const decrement = timeRef.current < 10 ? 0.1 : 1;
+      timeRef.current = Math.max(timeRef.current - decrement, 0);
+      setTime(timeRef.current);
 
       if (timeRef.current === 0) {
-        clearInterval(intervalRef.current!);
-        intervalRef.current = null;
         setIsRunning(false);
         onTimeRunOut();
-      }
-
-      setTime(timeRef.current);
-    }, timeRef.current < 10 ? 100 : 1000);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      } else {
+        const delay = timeRef.current < 10 ? 100 : 1000;
+        timeoutRef.current = window.setTimeout(tick, delay);
       }
     };
-  }, [isRunning]);
+
+    const initialDelay = timeRef.current < 10 ? 100 : 1000;
+    timeoutRef.current = window.setTimeout(tick, initialDelay);
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [isRunning, onTimeRunOut]);
 
   return {
     time,
