@@ -16,7 +16,7 @@ function Navbar() {
 
   useEffect(()=> {
     setIsGameFinished(false);
-  }, [gameId])
+  }, [gameId]);
 
   const getGameStatus = async () => {
     if (!gameId) return false;
@@ -78,9 +78,9 @@ function Navbar() {
   return (
     <>
       <div className="navbar">
-        <button onClick={handleBack}>
-          <ArrowLeftIcon size={10} />
-        </button>
+        <div className="navbar__back" onClick={handleBack}>
+          <ArrowLeftIcon size={15} />
+        </div>
         <NavItem to="/" label="Home" isInGame={gameId && !isGameFinished} onNavigate={handleNavigate} />
         <NavItem to="/new-game" label="New Game" isInGame={gameId && !isGameFinished} onNavigate={handleNavigate} />
         <NavItem to="/lobby" label="Lobby" isInGame={gameId && !isGameFinished} onNavigate={handleNavigate} />

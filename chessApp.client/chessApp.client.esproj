@@ -18,4 +18,9 @@
     <Folder Include="src\pages\" />
     <Folder Include="src\services\" />
   </ItemGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties build_4static_4js_4main_1713aa14b_1js_1map__JsonSchema="" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

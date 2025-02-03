@@ -1,6 +1,19 @@
+
 .navitem {
+  .navitem__link {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
     text-decoration: none;
+    padding: 0.5rem 0.75rem;
+    transition: color 0.2s ease-in-out, border-bottom 0.2s ease-in-out;
+
     &:hover {
-        transform: scale(1.05);
+      color: #ffcc00;
     }
+
+    &.active {
+      border-bottom: 2px solid #ffcc00;
+    }
+  }
 }

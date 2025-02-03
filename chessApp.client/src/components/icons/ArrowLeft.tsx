@@ -7,7 +7,7 @@ type ArrowLeftIconProps = {
 function ArrowLeftIcon({ size }: ArrowLeftIconProps) {
   const viewBoxSize = size;
 
-  const lineThickness = size / 5;
+  const lineThickness = size / 4;
   const horizontalLineLength = size;
 
   const horizontalStartX = 0;
@@ -26,9 +26,9 @@ function ArrowLeftIcon({ size }: ArrowLeftIconProps) {
       viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
       width={size}
       height={size}>
-        <line x1={diagonalStartX} x2={diagonalEndX} y1={diagonalStartY} y2={diagonalUpEndY} stroke="black" strokeWidth={lineThickness} />
-        <line x1={diagonalStartX} x2={diagonalEndX} y1={diagonalStartY} y2={diagonalDownEndY} stroke="black" strokeWidth={lineThickness} />
-        <line x1={horizontalStartX} x2={horizontalEndX} y1={horizontalY} y2={horizontalY} stroke="black" strokeWidth={lineThickness} /> {/*horizontal*/}
+        <line x1={diagonalStartX} x2={diagonalEndX} y1={diagonalStartY} y2={diagonalUpEndY} stroke="white" strokeWidth={lineThickness} />
+        <line x1={diagonalStartX} x2={diagonalEndX} y1={diagonalStartY} y2={diagonalDownEndY} stroke="white" strokeWidth={lineThickness} />
+        <line x1={horizontalStartX} x2={horizontalEndX} y1={horizontalY} y2={horizontalY} stroke="white" strokeWidth={lineThickness} /> {/*horizontal*/}
     </svg>
   );
 }
