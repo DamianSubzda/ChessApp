@@ -113,10 +113,10 @@ namespace ChessApp.Server.Hubs
 
         public async Task LeaveGameRoom(string gameId)
         {
-            var resultLost = new GameResult { Result = "You lost.", Reason = "You left the game." };
-            var resultWin = new GameResult { Result = "You won!", Reason = "Enemy player left the game!" };
+            var resultLost = new GameResult { Result = "Lose", Reason = "You left the game" };
+            var resultWin = new GameResult { Result = "Win", Reason = "Enemy player left the game!" };
 
-            var resultObserver = new GameResult { Result = "", Reason = "Enemy player left the game!" };
+            var resultObserver = new GameResult { Result = "Neutral", Reason = "" };
 
             try
             {
@@ -128,17 +128,14 @@ namespace ChessApp.Server.Hubs
 
                 var excludedClients = new List<string>();
 
-                if (playerWin != null)
+                if (playerWin != null && playerLost != null)
                 {
                     await Clients.Client(playerWin.ConnectionId).SendAsync("GameOver", resultWin);
-                    excludedClients.Add(playerWin.ConnectionId);
-                    resultObserver.Result = $"Player {playerWin.PlayerName} wins!";
-                }
-
-                if (playerLost != null)
-                {
                     await Clients.Client(playerLost.ConnectionId).SendAsync("GameOver", resultLost);
+                    excludedClients.Add(playerWin.ConnectionId);
                     excludedClients.Add(playerLost.ConnectionId);
+
+                    resultObserver.Reason = $"Player {playerWin.PlayerName} wins!\n{playerLost.PlayerName} left the game!";
                 }
 
                 await Clients.GroupExcept(gameId, excludedClients).SendAsync("GameOver", resultObserver);
@@ -184,15 +181,15 @@ namespace ChessApp.Server.Hubs
                     }
                     else if (turn.IsTieByInsufficientMaterial)
                     {
-                        await InsufficientMaterial(gameId);
+                        await InsufficientMaterial(gameId, caller, receiver);
                     }
                     else if (turn.IsTieBy50MovesRule)
                     {
-                        await TieBy50MovesRule(gameId);
+                        await TieBy50MovesRule(gameId, caller, receiver);
                     }
                     else if (turn.IsTieByRepeatingPosition)
                     {
-                        await TieByRepeatingPosition(gameId);
+                        await TieByRepeatingPosition(gameId, caller, receiver);
                     }
 
                 }
@@ -214,14 +211,17 @@ namespace ChessApp.Server.Hubs
                 var caller = Context.ConnectionId == game.PlayerWhite?.ConnectionId ? game.PlayerWhite : game.PlayerBlack;
                 var receiver = Context.ConnectionId == game.PlayerWhite?.ConnectionId ? game.PlayerBlack : game.PlayerWhite;
 
-                var playerLostResult = new GameResult { Result = "You lost.", Reason = "You ran out of time." };
-                var playerWonResult = new GameResult { Result = "You won!", Reason = "Enemy ran out of time!" };
+                var playerLostResult = new GameResult { Result = "Lose", Reason = "Time ran out" };
+                var playerWonResult = new GameResult { Result = "Win", Reason = "Enemy ran out of time!" };
 
-                var observersResult = new GameResult { Result = $"Player {receiver?.PlayerName} won!", Reason = "Enemy ran out of time!" };
-
-                await Clients.Client(caller.ConnectionId).SendAsync("GameOver", playerLostResult);
-                await Clients.Client(receiver.ConnectionId).SendAsync("GameOver", playerWonResult);
-                await Clients.GroupExcept(gameId, [caller.ConnectionId, receiver.ConnectionId]).SendAsync("GameOver", observersResult);
+                var observersResult = new GameResult { Result = "Neutral", Reason = $"{receiver?.PlayerName} won!\n{caller?.PlayerName} ran out of time!" };
+                
+                if (caller != null && receiver != null)
+                {
+                    await Clients.Client(caller.ConnectionId).SendAsync("GameOver", playerLostResult);
+                    await Clients.Client(receiver.ConnectionId).SendAsync("GameOver", playerWonResult);
+                    await Clients.GroupExcept(gameId, [caller.ConnectionId, receiver.ConnectionId]).SendAsync("GameOver", observersResult);
+                }
                 _gameService.SetGameStatusToEnded(gameId);
             }
             catch (GameNotFoundException)
@@ -233,10 +233,10 @@ namespace ChessApp.Server.Hubs
 
         public async Task PlayerCheckmated(string gameId, Player caller, Player receiver)
         {
-            var playerLostResult = new GameResult { Result = "You lost.", Reason = "You lost by checkmate." };
-            var playerWonResult = new GameResult { Result = "You won!", Reason = "Checkmate!" };
+            var playerLostResult = new GameResult { Result = "Lose", Reason = "Checkmate" };
+            var playerWonResult = new GameResult { Result = "Win", Reason = "Checkmate!" };
 
-            var observersResult = new GameResult { Result = $"Player {caller.PlayerName} won!", Reason = "Checkmate!" };
+            var observersResult = new GameResult { Result = "Neutral", Reason = $"Player {caller.PlayerName} won by checkmate!" };
 
             await Clients.Client(caller.ConnectionId).SendAsync("GameOver", playerWonResult);
             await Clients.Client(receiver.ConnectionId).SendAsync("GameOver", playerLostResult);
@@ -247,10 +247,10 @@ namespace ChessApp.Server.Hubs
 
         public async Task PlayerInPat(string gameId, Player caller, Player receiver)
         {
-            var resultDrawCaller = new GameResult { Result = "Tie!", Reason = "Enemy has no legal moves!" };
-            var resultDrawReceiver = new GameResult { Result = "Tie!", Reason = "You have no legal moves!" };
+            var resultDrawCaller = new GameResult { Result = "Tie", Reason = "Enemy had no legal moves!" };
+            var resultDrawReceiver = new GameResult { Result = "Tie", Reason = "You had no legal moves!" };
 
-            var observersResult = new GameResult { Result = "Tie!", Reason = $"Player {receiver} has no legal moves!" };
+            var observersResult = new GameResult { Result = "Neutral", Reason = $"Tie!\n{receiver.PlayerName} had no legal moves!" };
 
             await Clients.Client(caller.ConnectionId).SendAsync("GameOver", resultDrawCaller);
             await Clients.Client(receiver.ConnectionId).SendAsync("GameOver", resultDrawReceiver);
@@ -259,27 +259,39 @@ namespace ChessApp.Server.Hubs
             _gameService.SetGameStatusToEnded(gameId);
         }
 
-        public async Task InsufficientMaterial(string gameId)
+        public async Task InsufficientMaterial(string gameId, Player caller, Player receiver)
         {
-            var result = new GameResult { Result = "Tie!", Reason = "Insufficient material!" };
+            var result = new GameResult { Result = "Tie", Reason = "Insufficient material!" };
+            var observersResult = new GameResult { Result = "Neutral", Reason = $"Tie!\nInsufficient material!" };
 
-            await Clients.Group(gameId).SendAsync("GameOver", result);
+            await Clients.Client(caller.ConnectionId).SendAsync("GameOver", result);
+            await Clients.Client(receiver.ConnectionId).SendAsync("GameOver", result);
+            await Clients.GroupExcept(gameId, [caller.ConnectionId, receiver.ConnectionId]).SendAsync("GameOver", observersResult);
+
             _gameService.SetGameStatusToEnded(gameId);
         }
 
-        public async Task TieBy50MovesRule(string gameId)
+        public async Task TieBy50MovesRule(string gameId, Player caller, Player receiver)
         {
-            var result = new GameResult { Result = "Tie!", Reason = "50 moves rule!" };
+            var result = new GameResult { Result = "Tie", Reason = "50 moves rule!" };
+            var observersResult = new GameResult { Result = "Neutral", Reason = "50 moves rule!" };
 
-            await Clients.Group(gameId).SendAsync("GameOver", result);
+            await Clients.Client(caller.ConnectionId).SendAsync("GameOver", result);
+            await Clients.Client(receiver.ConnectionId).SendAsync("GameOver", result);
+            await Clients.GroupExcept(gameId, [caller.ConnectionId, receiver.ConnectionId]).SendAsync("GameOver", observersResult);
+
             _gameService.SetGameStatusToEnded(gameId);
         }
 
-        public async Task TieByRepeatingPosition(string gameId)
+        public async Task TieByRepeatingPosition(string gameId, Player caller, Player receiver)
         {
-            var result = new GameResult { Result = "Tie!", Reason = "Three times repeated position!" };
+            var result = new GameResult { Result = "Tie", Reason = "Three times repeated position!" };
+            var observersResult = new GameResult { Result = "Neutral", Reason = "Three times repeated position!" };
 
-            await Clients.Group(gameId).SendAsync("GameOver", result);
+            await Clients.Client(caller.ConnectionId).SendAsync("GameOver", result);
+            await Clients.Client(receiver.ConnectionId).SendAsync("GameOver", result);
+            await Clients.GroupExcept(gameId, [caller.ConnectionId, receiver.ConnectionId]).SendAsync("GameOver", observersResult);
+
             _gameService.SetGameStatusToEnded(gameId);
         }
 
@@ -302,10 +314,39 @@ namespace ChessApp.Server.Hubs
 
         public async Task AcceptDrawRequest(string gameId)
         {
-            var resultDraw = new GameResult { Result = "Tie!", Reason = "Players agreed to a draw!" };
-            await Clients.Group(gameId).SendAsync("GameOver", resultDraw);
+            try
+            {
+                var game = _gameService.GetGame(gameId) ?? throw new GameNotFoundException(gameId);
 
-            _gameService.SetGameStatusToEnded(gameId);
+                var result = new GameResult { Result = "Tie", Reason = "Players agreed to a draw!" };
+                var observersResult = new GameResult { Result = "Neutral", Reason = "Players agreed to a draw!" };
+
+                var caller = game.PlayerWhite?.ConnectionId == Context.ConnectionId ? game.PlayerWhite : game.PlayerBlack;
+                var receiver = game.PlayerWhite?.ConnectionId == Context.ConnectionId ? game.PlayerBlack: game.PlayerWhite;
+
+                var excludedClients = new List<string>();
+
+                if (caller != null && receiver != null)
+                {
+                    await Clients.Client(caller.ConnectionId).SendAsync("GameOver", result);
+                    await Clients.Client(receiver.ConnectionId).SendAsync("GameOver", result);
+
+                    excludedClients.Add(caller.ConnectionId);
+                    excludedClients.Add(receiver.ConnectionId);
+                }
+
+                await Clients.GroupExcept(gameId, excludedClients).SendAsync("GameOver", observersResult);
+                _gameService.SetGameStatusToEnded(gameId);
+
+            }
+            catch (GameNotFoundException)
+            {
+                await Clients.Caller.SendAsync("GameNotFound", gameId);
+                return;
+            }
+
+
+            
         }
 
         public async Task DeclineDrawRequest(string gameId)
@@ -322,14 +363,18 @@ namespace ChessApp.Server.Hubs
                 var caller = Context.ConnectionId == game.PlayerWhite?.ConnectionId ? game.PlayerWhite : game.PlayerBlack;
                 var receiver = Context.ConnectionId == game.PlayerWhite?.ConnectionId ? game.PlayerBlack : game.PlayerWhite;
 
-                var playerLostResult = new GameResult { Result = "You lost.", Reason = "Lost by resign." };
-                var playerWonResult = new GameResult { Result = "You won!", Reason = "Enemy resigned!" };
+                var playerLostResult = new GameResult { Result = "Lose", Reason = "Lost by resign" };
+                var playerWonResult = new GameResult { Result = "Win", Reason = "Enemy resigned!" };
 
-                var observersResult = new GameResult { Result = $"Player {receiver?.PlayerName} won!", Reason = "Enemy resigned!" };
-
-                await Clients.Client(caller.ConnectionId).SendAsync("GameOver", playerLostResult);
-                await Clients.Client(receiver.ConnectionId).SendAsync("GameOver", playerWonResult);
-                await Clients.GroupExcept(gameId, [caller.ConnectionId, receiver.ConnectionId]).SendAsync("GameOver", observersResult);
+                var observersResult = new GameResult { Result = "Neutral", Reason = $"{receiver?.PlayerName} won!\n{caller?.PlayerName} resigned!" };
+                
+                if (caller != null && receiver != null)
+                {
+                    await Clients.Client(caller.ConnectionId).SendAsync("GameOver", playerLostResult);
+                    await Clients.Client(receiver.ConnectionId).SendAsync("GameOver", playerWonResult);
+                    await Clients.GroupExcept(gameId, [caller.ConnectionId, receiver.ConnectionId]).SendAsync("GameOver", observersResult);
+                }
+                
                 _gameService.SetGameStatusToEnded(gameId);
             }
             catch (GameNotFoundException)
@@ -338,5 +383,6 @@ namespace ChessApp.Server.Hubs
                 return;
             }
         }
+
     }
 }

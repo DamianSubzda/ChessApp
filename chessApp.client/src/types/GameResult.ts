@@ -1,5 +1,7 @@
 
 export type GameResult = {
-  result: string;
+  result: GameOutcome;
   reason: string;
 }
+
+export type GameOutcome = "Win" | "Lose" | "Tie" | "Neutral";
