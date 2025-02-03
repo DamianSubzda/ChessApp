@@ -81,7 +81,7 @@ Below are screenshots demonstrating the core functionality and user interface of
 #### Game Results:
 
 ![Game result (win) screenshot](Images/GameResultWin.png)  
-![Game result (lose) screenshot](Images/GameResultLose.png)  
+![Game result (lose) screenshot](Images/GameResultLose.jpng)  
 ![Game result (tie) screenshot](Images/GameResultTie.png)  
 ![Game result (observer) screenshot](Images/GameResultObserver.png)
 
