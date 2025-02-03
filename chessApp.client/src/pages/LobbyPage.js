@@ -1,6 +1,9 @@
-import GameList from "./../components/lobby/GameList.tsx"
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+
+import "./LobbyPage.scss"
+
+import GameList from "./../components/lobby/GameList.tsx"
 import LobbyService from "../services/LobbyService.ts";
 
 function LobbyPage(){
@@ -53,9 +56,27 @@ function LobbyPage(){
     }, [])
 
     return(
-        <React.Fragment>
-          <GameList games={games} joinGame={handleJoinGame}/>
-        </React.Fragment>
+      <>
+        <div className="lobby__panel">
+            <div className="gamelist">
+                <div className="gamelist__header">
+                    <p>Lp.</p>
+                    <p>Player Name</p>
+                    <p>Creation Time</p>
+                    <p>Game ID</p>
+                    <p> </p>
+                </div>
+                <div className="gamelist__body">
+                  {games.length === 0 ?
+                    <h1>There are no waiting games yet...</h1>
+                    : 
+                    <></>
+                  }
+                  <GameList games={games} joinGame={handleJoinGame}/>
+                </div>
+            </div> 
+          </div>
+      </>
     );
 }
 
