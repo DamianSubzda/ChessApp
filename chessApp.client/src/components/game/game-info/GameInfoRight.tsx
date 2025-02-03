@@ -7,6 +7,7 @@ import MovesHistory from "./game-info__right/moves-history/MovesHistory.tsx";
 import { GameControllerType } from "./../../../hooks/useGameController.tsx"
 
 import "./GameInfoRight.scss"
+import RotateBoardIcon from "components/icons/RotateBoardIcon.tsx";
 
 interface GameInfoRightPlayerProps {
   gameController: GameControllerType
@@ -38,7 +39,7 @@ function GameInfoRight({ gameController }: GameInfoRightPlayerProps) {
             </>
             : 
             <button onClick={gameController.onClickRotateBoardForObserver}>
-                Rotate
+                <RotateBoardIcon size={32}/>
             </button>
           }
           
